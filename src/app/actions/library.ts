@@ -4,6 +4,7 @@ import { refresh } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
+import { saveCover } from "@/lib/covers"
 import { db } from "@/lib/db"
 import type { ActionState } from "@/lib/utils-text"
 
@@ -11,16 +12,20 @@ const bookSchema = z.object({
   title: z.string().trim().min(1, "Informe o título").max(200),
   author: z.string().trim().min(1, "Informe o autor").max(120),
   totalPages: z.coerce.number().int().min(1, "Número de páginas inválido").max(20000),
-  coverUrl: z.union([z.literal(""), z.url("URL da capa inválida")]).optional(),
   status: z.enum(["WANT", "READING", "DONE"]).default("WANT"),
 })
 
 export async function addBook(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const userId = await requireUserId()
-  const parsed = bookSchema.safeParse(Object.fromEntries(formData))
+  const { coverFile, ...fields } = Object.fromEntries(formData)
+  const parsed = bookSchema.safeParse(fields)
   if (!parsed.success) return { error: parsed.error.issues[0]?.message }
 
-  const { title, author, totalPages, coverUrl, status } = parsed.data
+  // Só sobe a foto depois de validar o resto, para não deixar arquivo órfão no R2.
+  const cover = await saveCover(userId, coverFile ?? null)
+  if (cover && "error" in cover) return { error: cover.error }
+
+  const { title, author, totalPages, status } = parsed.data
   const now = new Date()
 
   await db.book.create({
@@ -28,7 +33,7 @@ export async function addBook(_prev: ActionState, formData: FormData): Promise<A
       title,
       author,
       totalPages,
-      coverUrl: coverUrl || null,
+      coverUrl: cover?.path ?? null,
       createdById: userId,
       libraryItems: {
         create: {

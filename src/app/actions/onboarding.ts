@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
 import { acceptInvite, joinErrorMessage, parseInviteCode } from "@/lib/clubs"
+import { saveCover } from "@/lib/covers"
 import { db } from "@/lib/db"
 import { safeNext } from "@/lib/redirects"
 import type { ActionState } from "@/lib/utils-text"
@@ -31,7 +32,6 @@ const firstBookSchema = z
     author: z.string().trim().min(1, "Informe o autor").max(120),
     totalPages: z.coerce.number().int().min(1, "Número de páginas inválido").max(20000),
     currentPage: z.preprocess((v) => (v === "" ? 0 : v), z.coerce.number().int().min(0, "Página atual inválida")),
-    coverUrl: z.union([z.literal(""), z.url("URL da capa inválida")]).optional(),
   })
   .refine((b) => b.currentPage < b.totalPages, {
     message: "A página atual precisa ser menor que o total de páginas",
@@ -39,16 +39,20 @@ const firstBookSchema = z
 
 export async function saveFirstBook(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const userId = await requireUserId()
-  const parsed = firstBookSchema.safeParse(Object.fromEntries(formData))
+  const { coverFile, ...fields } = Object.fromEntries(formData)
+  const parsed = firstBookSchema.safeParse(fields)
   if (!parsed.success) return { error: parsed.error.issues[0]?.message }
 
-  const { title, author, totalPages, currentPage, coverUrl } = parsed.data
+  const cover = await saveCover(userId, coverFile ?? null)
+  if (cover && "error" in cover) return { error: cover.error }
+
+  const { title, author, totalPages, currentPage } = parsed.data
   await db.book.create({
     data: {
       title,
       author,
       totalPages,
-      coverUrl: coverUrl || null,
+      coverUrl: cover?.path ?? null,
       createdById: userId,
       libraryItems: { create: { userId, status: "READING", currentPage, startedAt: new Date() } },
     },

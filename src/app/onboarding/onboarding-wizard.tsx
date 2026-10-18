@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react"
 import { BookOpenIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover } from "@/components/book-cover"
+import { CoverPicker } from "@/components/cover-picker"
 import { BirdDoodle, BookDoodle, EnvelopeDoodle, FlockDoodle, SunDoodle } from "@/components/doodles"
 import { GoalPicker } from "@/components/goal-picker"
 import { Button } from "@/components/ui/button"
@@ -136,8 +137,8 @@ function BookStep({ onDone }: { onDone: () => void }) {
           </Field>
         </div>
         <Field>
-          <FieldLabel htmlFor="coverUrl">URL da capa (opcional)</FieldLabel>
-          <Input id="coverUrl" name="coverUrl" type="url" inputMode="url" placeholder="https://…" className="h-12" />
+          <FieldLabel>Capa (opcional)</FieldLabel>
+          <CoverPicker />
         </Field>
         {state?.error && <FieldError>{state.error}</FieldError>}
       </FieldGroup>

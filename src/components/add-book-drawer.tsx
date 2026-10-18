@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react"
 import { PlusIcon } from "@phosphor-icons/react/dist/ssr"
 import { toast } from "sonner"
+import { CoverPicker } from "@/components/cover-picker"
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -83,8 +84,8 @@ function AddBookForm({ onDone }: { onDone: () => void }) {
           </Field>
         </div>
         <Field>
-          <FieldLabel htmlFor="coverUrl">URL da capa (opcional)</FieldLabel>
-          <Input id="coverUrl" name="coverUrl" type="url" inputMode="url" placeholder="https://…" className="h-11" />
+          <FieldLabel>Capa (opcional)</FieldLabel>
+          <CoverPicker />
         </Field>
         {state?.error && <FieldError>{state.error}</FieldError>}
       </FieldGroup>

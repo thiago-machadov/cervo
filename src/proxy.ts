@@ -19,5 +19,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icon|apple-icon|.*\\.(?:png|svg|ico|webp)$).*)"],
+  // /capas fica de fora: imagens públicas, sem necessidade de checar a sessão (economiza CPU no Worker).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icon|apple-icon|capas/|.*\\.(?:png|svg|ico|webp)$).*)"],
 }

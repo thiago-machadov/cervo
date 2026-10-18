@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
   // Cache Components e Partial Prefetching ficam desligados: no Cloudflare Workers o
@@ -8,6 +9,10 @@ const nextConfig: NextConfig = {
   // no Cloudflare Workers o pg precisa da versão real (condição "workerd").
   outputFileTracingIncludes: {
     "/**": ["./node_modules/pg-cloudflare/**/*"],
+  },
+  experimental: {
+    // Fotos de capa chegam já reduzidas pelo navegador; o limite é só uma margem.
+    serverActions: { bodySizeLimit: "4mb" },
   },
   turbopack: {
     rules: {
@@ -20,3 +25,6 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// Disponibiliza os bindings do wrangler.jsonc (ex.: R2) no `next dev`.
+initOpenNextCloudflareForDev();

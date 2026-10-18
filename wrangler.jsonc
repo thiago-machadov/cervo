@@ -11,6 +11,10 @@
 	"observability": {
 		"enabled": true
 	},
+	// Fotos das capas dos livros (no `next dev` usa um R2 simulado em .wrangler/state).
+	"r2_buckets": [
+		{ "binding": "COVERS", "bucket_name": "cervo-capas" }
+	],
 	// Domínios próprios: a Cloudflare cria o DNS e o certificado HTTPS no deploy
 	// (exige o domínio ativo na conta, com os nameservers apontando para a Cloudflare).
 	"routes": [
