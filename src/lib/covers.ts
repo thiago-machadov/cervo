@@ -70,3 +70,26 @@ export async function saveCheckInPhoto(userId: string, file: FormDataEntryValue 
 export function readCheckInPhoto(key: string) {
   return bucket().get(`fotos/${key}`)
 }
+
+/** Chave no R2 de um caminho salvo no banco (/capas/... ou /fotos/...); null se não for nosso. */
+function storageKey(path: string | null | undefined) {
+  const match = path?.match(/^\/(capas|fotos)\/(.+)$/)
+  if (!match || !isImageKey(match[2]!)) return null
+  return match[1] === "fotos" ? `fotos/${match[2]}` : match[2]!
+}
+
+/** Apaga do R2 as imagens destes caminhos (ignora vazios e caminhos externos). */
+export async function deleteImages(paths: (string | null | undefined)[]) {
+  const keys = paths.map(storageKey).filter((key): key is string => key !== null)
+  if (keys.length > 0) await bucket().delete(keys)
+}
+
+/** Apaga todas as fotos de check-in de um usuário (exclusão de conta). */
+export async function deleteAllCheckInPhotos(userId: string) {
+  let cursor: string | undefined
+  do {
+    const page = await bucket().list({ prefix: `fotos/${userId}/`, cursor })
+    if (page.objects.length > 0) await bucket().delete(page.objects.map((o) => o.key))
+    cursor = page.truncated ? page.cursor : undefined
+  } while (cursor)
+}

@@ -41,6 +41,8 @@ enum ReadingMode {
 
 enum ClubRole {
   OWNER
+  /// Ajuda o dono: edita o clube e remove membros comuns
+  ADMIN
   MEMBER
 }
 
@@ -76,10 +78,11 @@ model Book {
   author      String
   totalPages  Int
   coverUrl    String?
-  createdById String
+  /// Quem cadastrou. Fica vazio se a conta for excluída: o livro continua na biblioteca dos outros.
+  createdById String?
   createdAt   DateTime @default(now())
 
-  createdBy    User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy    User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
   libraryItems LibraryItem[]
   clubs        Club[]
   checkIns     CheckIn[]

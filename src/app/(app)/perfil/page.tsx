@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import Link from "next/link"
-import { CaretRightIcon, ChatCircleDotsIcon, DeviceMobileIcon, SignOutIcon, UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
+import { CaretRightIcon, ChatCircleDotsIcon, DeviceMobileIcon, ShieldCheckIcon, SignOutIcon, UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
 import type { Icon } from "@phosphor-icons/react/lib"
 import { SpiralDoodle, ThreadDoodle } from "@/components/doodles"
 import { EditGoalDrawer } from "@/components/edit-goal-drawer"
@@ -20,6 +20,7 @@ const LINKS: { href: string; icon: Icon; title: string; description: string }[] 
   { href: "/amigos", icon: UsersThreeIcon, title: "Amigos", description: "Pedidos de amizade e seu link para convidar" },
   { href: "/feedback", icon: ChatCircleDotsIcon, title: "Mandar feedback", description: "Bugs, ideias e elogios sobre o app" },
   { href: "/instalar", icon: DeviceMobileIcon, title: "Instalar o app", description: "Passo a passo para iPhone e Android" },
+  { href: "/conta", icon: ShieldCheckIcon, title: "Privacidade e conta", description: "Baixar seus dados, termos e excluir a conta" },
 ]
 
 export default function ProfilePage() {

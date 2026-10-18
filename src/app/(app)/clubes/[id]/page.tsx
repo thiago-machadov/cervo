@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { PencilSimpleIcon, TargetIcon } from "@phosphor-icons/react/dist/ssr"
+import { PencilSimpleIcon, TargetIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover, ClubTile } from "@/components/book-cover"
 import { BooksDoodle, EyeDoodle, FlameDoodle, StarDoodle } from "@/components/doodles"
 import { FeedList } from "@/components/feed-item"
@@ -13,7 +13,7 @@ import { UserAvatar } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentUser } from "@/lib/auth"
-import { clubMembersLabel } from "@/lib/clubs"
+import { canManageClub, clubMembersLabel, findClubHeir } from "@/lib/clubs"
 import { formatDate } from "@/lib/dates"
 import { expectedPage, getClubDetail } from "@/lib/queries"
 import { cn } from "@/lib/utils"
@@ -33,7 +33,10 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
   if (!data) notFound()
 
   const { club, ranking, feed, freeReading, myWeekPages } = data
-  const isOwner = club.ownerId === user.id
+  const myRole = club.members.find((m) => m.userId === user.id)?.role ?? null
+  const isOwner = myRole === "OWNER"
+  const canManage = canManageClub(myRole)
+  const heir = isOwner ? await findClubHeir(club.id, user.id) : null
   const target = expectedPage(club)
   const me = ranking.find((r) => r.user.id === user.id)
 
@@ -44,7 +47,7 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
         subtitle={clubMembersLabel(club.members.length, club.maxMembers, club.visibility)}
         backHref="/clubes"
         action={
-          isOwner && (
+          canManage && (
             <Button variant="ghost" size="icon-lg" render={<Link href={`/clubes/${club.id}/editar`} />} nativeButton={false}>
               <PencilSimpleIcon />
               <span className="sr-only">Editar clube</span>
@@ -80,7 +83,7 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
         ) : (
           <div className="rounded-2xl border border-dashed border-primary/30 p-4 text-sm text-muted-foreground">
             Nenhum livro definido.{" "}
-            {isOwner && (
+            {canManage && (
               <Link href={`/clubes/${club.id}/editar`} className="font-medium text-foreground underline underline-offset-4">
                 Escolher livro
               </Link>
@@ -132,6 +135,9 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
           ) : (
             <InviteButton clubId={club.id} clubName={club.name} />
           )}
+          <Button variant="outline" className="h-10 flex-1" render={<Link href={`/clubes/${club.id}/membros`} />} nativeButton={false}>
+            <UsersIcon /> Membros
+          </Button>
         </div>
       </div>
 
@@ -199,7 +205,7 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
       </Tabs>
 
       <div className="p-4">
-        <LeaveClubButton clubId={club.id} isOwner={isOwner} />
+        <LeaveClubButton clubId={club.id} isOwner={isOwner} heirName={heir?.user.name ?? null} />
       </div>
     </main>
   )

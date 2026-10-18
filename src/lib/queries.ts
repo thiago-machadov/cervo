@@ -302,3 +302,13 @@ export async function getPersonProfile(viewerId: string, personId: string) {
   ])
   return { person, canSeeActivity, stats, checkIns }
 }
+
+/** Se este é o check-in mais recente do usuário naquele livro (só ele pode mudar a página). */
+export async function isLatestCheckIn(userId: string, bookId: string, checkInId: string) {
+  const latest = await db.checkIn.findFirst({
+    where: { userId, bookId },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: { id: true },
+  })
+  return latest?.id === checkInId
+}

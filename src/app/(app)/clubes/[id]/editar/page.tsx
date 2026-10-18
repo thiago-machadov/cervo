@@ -18,7 +18,9 @@ export default function EditClubPage({ params }: PageProps<"/clubes/[id]/editar"
 async function EditClubContent({ params }: Pick<PageProps<"/clubes/[id]/editar">, "params">) {
   const { id } = await params
   const user = await getCurrentUser()
-  const club = await db.club.findFirst({ where: { id, ownerId: user.id } })
+  const club = await db.club.findFirst({
+    where: { id, members: { some: { userId: user.id, role: { in: ["OWNER", "ADMIN"] } } } },
+  })
   if (!club) notFound()
 
   const library = await getLibrary(user.id)

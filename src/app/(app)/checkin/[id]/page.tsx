@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
+import { CheckInActions } from "@/components/check-in-actions"
 import { CommentForm } from "@/components/comment-form"
 import { EyeDoodle } from "@/components/doodles"
 import { FeedItem } from "@/components/feed-item"
@@ -8,7 +9,7 @@ import { PageSkeleton } from "@/components/page-skeleton"
 import { UserAvatar } from "@/components/user-avatar"
 import { getCurrentUser } from "@/lib/auth"
 import { timeAgo } from "@/lib/dates"
-import { getCheckInDetail } from "@/lib/queries"
+import { getCheckInDetail, isLatestCheckIn } from "@/lib/queries"
 
 export default function CheckInPage({ params }: PageProps<"/checkin/[id]">) {
   return (
@@ -23,12 +24,28 @@ async function CheckInContent({ params }: Pick<PageProps<"/checkin/[id]">, "para
   const user = await getCurrentUser()
   const checkIn = await getCheckInDetail(id, user.id)
   if (!checkIn) notFound()
+  const isAuthor = checkIn.userId === user.id
+  const isLatest = isAuthor && (await isLatestCheckIn(user.id, checkIn.bookId, checkIn.id))
 
   return (
     <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Check-in" backHref="/feed" />
-      <div className="px-4 pt-2">
+      <div className="space-y-3 px-4 pt-2">
         <FeedItem checkIn={checkIn} viewerId={user.id} linkToDetail={false} />
+        {isAuthor && (
+          <CheckInActions
+            isLatest={isLatest}
+            checkIn={{
+              id: checkIn.id,
+              fromPage: checkIn.fromPage,
+              toPage: checkIn.toPage,
+              totalPages: checkIn.book.totalPages,
+              minutes: checkIn.minutes,
+              note: checkIn.note,
+              photoUrl: checkIn.photoUrl,
+            }}
+          />
+        )}
       </div>
 
       <section className="space-y-4 px-4 py-6">

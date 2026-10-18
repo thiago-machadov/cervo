@@ -69,3 +69,51 @@ export function joinErrorMessage(error: "invalid" | "full" | "private") {
   if (error === "private") return "Esse clube é privado: entre por um link de convite"
   return "Convite inválido ou expirado"
 }
+
+export type ClubRoleName = "OWNER" | "ADMIN" | "MEMBER"
+
+export const ROLE_LABEL: Record<ClubRoleName, string> = { OWNER: "Dono", ADMIN: "Admin", MEMBER: "Membro" }
+
+/** Papel do usuário no clube, ou null se não for membro. */
+export async function getClubRole(clubId: string, userId: string): Promise<ClubRoleName | null> {
+  const member = await db.clubMember.findUnique({ where: { clubId_userId: { clubId, userId } }, select: { role: true } })
+  return member?.role ?? null
+}
+
+/** Dono e admins editam o clube e removem membros comuns. */
+export function canManageClub(role: ClubRoleName | null) {
+  return role === "OWNER" || role === "ADMIN"
+}
+
+/** Passa o clube para outro membro (o antigo dono vira admin). */
+export async function transferClub(clubId: string, fromUserId: string, toUserId: string) {
+  await db.$transaction([
+    db.club.update({ where: { id: clubId }, data: { ownerId: toUserId } }),
+    db.clubMember.update({ where: { clubId_userId: { clubId, userId: toUserId } }, data: { role: "OWNER" } }),
+    db.clubMember.update({ where: { clubId_userId: { clubId, userId: fromUserId } }, data: { role: "ADMIN" } }),
+  ])
+}
+
+/**
+ * Quem herda o clube quando o dono sai: o admin mais antigo ou, sem admins,
+ * o membro mais antigo. Devolve null se o dono está sozinho.
+ */
+export async function findClubHeir(clubId: string, ownerId: string) {
+  const members = await db.clubMember.findMany({
+    where: { clubId, userId: { not: ownerId } },
+    orderBy: { joinedAt: "asc" },
+    select: { userId: true, role: true, user: { select: { name: true } } },
+  })
+  return members.find((m) => m.role === "ADMIN") ?? members[0] ?? null
+}
+
+/** O dono sai do clube: passa para o herdeiro e sai; sozinho, o clube é apagado. */
+export async function ownerLeaveClub(clubId: string, ownerId: string) {
+  const heir = await findClubHeir(clubId, ownerId)
+  if (!heir) {
+    await db.club.delete({ where: { id: clubId } })
+    return
+  }
+  await transferClub(clubId, ownerId, heir.userId)
+  await db.clubMember.delete({ where: { clubId_userId: { clubId, userId: ownerId } } })
+}

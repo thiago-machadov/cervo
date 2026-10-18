@@ -5,7 +5,14 @@ import { refresh } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
-import { acceptInvite, ensureReading, joinPublicClub as joinPublic } from "@/lib/clubs"
+import {
+  acceptInvite,
+  ensureReading,
+  getClubRole,
+  joinPublicClub as joinPublic,
+  ownerLeaveClub,
+  transferClub,
+} from "@/lib/clubs"
 import { db } from "@/lib/db"
 import type { ActionState } from "@/lib/utils-text"
 
@@ -78,10 +85,10 @@ export async function updateClub(_prev: ActionState, formData: FormData): Promis
   const userId = await requireUserId()
   const clubId = String(formData.get("clubId") ?? "")
   const club = await db.club.findFirst({
-    where: { id: clubId, ownerId: userId },
+    where: { id: clubId, members: { some: { userId, role: { in: ["OWNER", "ADMIN"] } } } },
     include: { members: { select: { userId: true } } },
   })
-  if (!club) return { error: "Só quem criou o clube pode editá-lo" }
+  if (!club) return { error: "Só o dono e os admins podem editar o clube" }
 
   const parsed = clubSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0]?.message }
@@ -156,14 +163,64 @@ export async function joinPublicClub(clubId: string): Promise<{ error?: string }
 
 export async function leaveClub(clubId: string) {
   const userId = await requireUserId()
-  const club = await db.club.findUnique({ where: { id: clubId }, select: { ownerId: true } })
-  if (!club) return
-  if (club.ownerId === userId) {
-    // Dono saindo: apaga o clube inteiro.
-    await db.club.delete({ where: { id: clubId } })
+  const role = await getClubRole(clubId, userId)
+  if (!role) return
+  if (role === "OWNER") {
+    // Dono saindo: o clube passa para o admin (ou membro) mais antigo; sozinho, é apagado.
+    await ownerLeaveClub(clubId, userId)
   } else {
     await db.clubMember.deleteMany({ where: { clubId, userId } })
   }
   refresh()
   redirect("/clubes")
+}
+
+/** Apaga o clube para todos. Só o dono. */
+export async function deleteClub(clubId: string) {
+  const userId = await requireUserId()
+  const { count } = await db.club.deleteMany({ where: { id: clubId, ownerId: userId } })
+  if (count === 0) return
+  refresh()
+  redirect("/clubes")
+}
+
+export type MemberActionResult = { ok?: true; message?: string; error?: string }
+
+/** Dono remove qualquer um; admin remove só membros comuns. */
+export async function removeMember(clubId: string, memberId: string): Promise<MemberActionResult> {
+  const userId = await requireUserId()
+  if (memberId === userId) return { error: "Para sair, use “Sair do clube”" }
+  const [actorRole, targetRole] = await Promise.all([getClubRole(clubId, userId), getClubRole(clubId, memberId)])
+  if (!targetRole) return { error: "Essa pessoa não está no clube" }
+  const allowed = actorRole === "OWNER" || (actorRole === "ADMIN" && targetRole === "MEMBER")
+  if (!allowed || targetRole === "OWNER") return { error: "Você não pode remover essa pessoa" }
+
+  await db.clubMember.delete({ where: { clubId_userId: { clubId, userId: memberId } } })
+  refresh()
+  return { ok: true, message: "Removido do clube" }
+}
+
+/** Promove a admin ou volta a membro. Só o dono. */
+export async function setMemberRole(clubId: string, memberId: string, role: "ADMIN" | "MEMBER"): Promise<MemberActionResult> {
+  const userId = await requireUserId()
+  if (role !== "ADMIN" && role !== "MEMBER") return { error: "Papel inválido" }
+  const [actorRole, targetRole] = await Promise.all([getClubRole(clubId, userId), getClubRole(clubId, memberId)])
+  if (actorRole !== "OWNER") return { error: "Só o dono muda os papéis" }
+  if (!targetRole || targetRole === "OWNER") return { error: "Não dá para mudar o papel dessa pessoa" }
+
+  await db.clubMember.update({ where: { clubId_userId: { clubId, userId: memberId } }, data: { role } })
+  refresh()
+  return { ok: true, message: role === "ADMIN" ? "Agora é admin" : "Voltou a ser membro" }
+}
+
+/** Passa o clube para outro membro; o dono atual vira admin. */
+export async function transferOwnership(clubId: string, memberId: string): Promise<MemberActionResult> {
+  const userId = await requireUserId()
+  const [actorRole, targetRole] = await Promise.all([getClubRole(clubId, userId), getClubRole(clubId, memberId)])
+  if (actorRole !== "OWNER") return { error: "Só o dono pode passar o clube" }
+  if (!targetRole || memberId === userId) return { error: "Escolha outro membro do clube" }
+
+  await transferClub(clubId, userId, memberId)
+  refresh()
+  return { ok: true, message: "O clube tem um novo dono" }
 }

@@ -42,15 +42,39 @@ export default function WelcomePage({ searchParams }: PageProps<"/boas-vindas">)
         <Suspense fallback={<WelcomeActions />}>
           <WelcomeActionsWithNext searchParams={searchParams} />
         </Suspense>
+        <LegalLinks />
       </div>
     </div>
   )
 }
 
+function LegalLinks() {
+  return (
+    <p className="pt-2 text-center text-xs text-muted-foreground">
+      <Link href="/termos" className="underline underline-offset-4">
+        Termos de uso
+      </Link>{" "}
+      ·{" "}
+      <Link href="/privacidade" className="underline underline-offset-4">
+        Privacidade
+      </Link>
+    </p>
+  )
+}
+
 async function WelcomeActionsWithNext({ searchParams }: Pick<PageProps<"/boas-vindas">, "searchParams">) {
-  const { next } = await searchParams
+  const { next, conta } = await searchParams
   if (await getSessionUserId()) redirect("/")
-  return <WelcomeActions next={typeof next === "string" ? next : undefined} />
+  return (
+    <>
+      {conta === "excluida" && (
+        <p role="status" className="rounded-2xl bg-secondary p-3 text-center text-sm text-secondary-foreground">
+          Sua conta e seus dados foram excluídos. Obrigado por ter lido com a gente.
+        </p>
+      )}
+      <WelcomeActions next={typeof next === "string" ? next : undefined} />
+    </>
+  )
 }
 
 function WelcomeActions({ next }: { next?: string }) {
