@@ -21,6 +21,16 @@
 	"placement": {
 		"mode": "smart"
 	},
+	// Pool de conexões da Cloudflare na frente do Supabase (session pooler, porta 5432), cache de consultas desligado.
+	// Evita abrir conexão TLS nova com o banco a cada request. No `next dev` o app usa DATABASE_URL direto;
+	// localConnectionString (Supabase local, credenciais padrão) só serve para o wrangler simular o binding.
+	"hyperdrive": [
+		{
+			"binding": "HYPERDRIVE",
+			"id": "6fcffb6a790e47bb9387383c04db479f",
+			"localConnectionString": "postgresql://postgres:postgres@127.0.0.1:55422/postgres"
+		}
+	],
 	// Fotos das capas dos livros (no `next dev` usa um R2 simulado em .wrangler/state).
 	"r2_buckets": [
 		{ "binding": "COVERS", "bucket_name": "cervo-capas" }
