@@ -14,8 +14,17 @@ const items = [
   { href: "/perfil", label: "Perfil", icon: UserIcon },
 ]
 
+/** Telas internas que pertencem a uma aba (ex.: /amigos fica sob Feed, /feedback sob Perfil). */
+const SECTION_PATHS: Record<string, string[]> = {
+  "/feed": ["/amigos", "/pessoas", "/checkin"],
+  "/perfil": ["/feedback", "/instalar"],
+}
+
 function isActive(pathname: string | undefined, href: string) {
-  return pathname !== undefined && (href === "/" ? pathname === "/" : pathname.startsWith(href))
+  if (pathname === undefined) return false
+  if (href === "/") return pathname === "/"
+  // Compara por segmento: "/feedback" não pode ativar "/feed".
+  return [href, ...(SECTION_PATHS[href] ?? [])].some((base) => pathname === base || pathname.startsWith(`${base}/`))
 }
 
 export function BottomNav() {

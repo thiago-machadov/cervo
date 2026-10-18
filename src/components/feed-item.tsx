@@ -29,6 +29,16 @@ export function FeedItem({
         {finished && " 🎉"}
       </p>
       {checkIn.note && <p className="text-sm whitespace-pre-line text-muted-foreground">{checkIn.note}</p>}
+      {checkIn.photoUrl && (
+        // Foto do R2 servida pela rota /fotos (com login); next/image não otimiza no Workers.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={checkIn.photoUrl}
+          alt={`Foto da leitura de ${user.name}`}
+          loading="lazy"
+          className="max-h-96 w-full rounded-xl bg-muted object-cover ring-1 ring-border/60"
+        />
+      )}
       <div className="flex items-center gap-3 rounded-xl bg-muted/70 p-2">
         <BookCover title={book.title} coverUrl={book.coverUrl} className="w-8" />
         <div className="min-w-0 flex-1">
@@ -54,7 +64,9 @@ export function FeedItem({
 
   return (
     <article className="flex gap-3 rounded-2xl bg-card p-4 ring-1 ring-border/60">
-      <UserAvatar name={user.name} />
+      <Link href={`/pessoas/${user.id}`} aria-label={`Perfil de ${user.name}`} className="h-fit shrink-0">
+        <UserAvatar name={user.name} />
+      </Link>
       <div className="min-w-0 flex-1 space-y-3">
         {linkToDetail ? (
           <Link href={`/checkin/${checkIn.id}`} className="block transition-opacity active:opacity-70">

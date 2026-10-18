@@ -3,8 +3,10 @@
 import { refresh } from "next/cache"
 import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
+import { saveCheckInPhoto } from "@/lib/covers"
 import { db } from "@/lib/db"
 import { dayKey } from "@/lib/dates"
+import { findFriendship } from "@/lib/friends"
 import { isReaction } from "@/lib/reactions"
 import type { ActionState } from "@/lib/utils-text"
 
@@ -38,6 +40,9 @@ export async function createCheckIn(_prev: ActionState, formData: FormData): Pro
     return { error: `Esse livro tem ${book.totalPages} páginas.` }
   }
 
+  const photo = await saveCheckInPhoto(userId, formData.get("photoFile"))
+  if (photo && "error" in photo) return { error: photo.error }
+
   const now = new Date()
   const finished = toPage === book.totalPages
 
@@ -51,6 +56,7 @@ export async function createCheckIn(_prev: ActionState, formData: FormData): Pro
         pagesRead: toPage - item.currentPage,
         minutes: minutes ?? null,
         note: note || null,
+        photoUrl: photo?.path ?? null,
         day: dayKey(now),
       },
     }),
@@ -69,16 +75,19 @@ export async function createCheckIn(_prev: ActionState, formData: FormData): Pro
   return { ok: true }
 }
 
-/** Só o autor ou quem divide um clube com ele pode comentar/reagir num check-in. */
+/** Só o autor, quem divide um clube com ele ou os amigos dele podem comentar/reagir num check-in. */
 async function canInteract(userId: string, checkInId: string) {
   const checkIn = await db.checkIn.findUnique({ where: { id: checkInId }, select: { userId: true } })
   if (!checkIn) return false
   if (checkIn.userId === userId) return true
-  const shared = await db.clubMember.findFirst({
-    where: { userId, club: { members: { some: { userId: checkIn.userId } } } },
-    select: { id: true },
-  })
-  return Boolean(shared)
+  const [shared, friendship] = await Promise.all([
+    db.clubMember.findFirst({
+      where: { userId, club: { members: { some: { userId: checkIn.userId } } } },
+      select: { id: true },
+    }),
+    findFriendship(userId, checkIn.userId),
+  ])
+  return Boolean(shared) || friendship?.status === "ACCEPTED"
 }
 
 const commentSchema = z.object({

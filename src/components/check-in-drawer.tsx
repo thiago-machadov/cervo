@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useActionState, useEffect, useState } from "react"
 import { toast } from "sonner"
+import { CoverPicker } from "@/components/cover-picker"
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -143,6 +144,11 @@ function CheckInForm({
         <Field>
           <FieldLabel htmlFor="note">Nota (opcional)</FieldLabel>
           <Textarea id="note" name="note" placeholder="O que achou da leitura de hoje?" rows={3} maxLength={1000} />
+        </Field>
+        <Field>
+          <FieldLabel>Foto (opcional)</FieldLabel>
+          <CoverPicker name="photoFile" variant="photo" />
+          <FieldDescription>Um trecho, o cantinho de leitura, o café… Aparece no feed.</FieldDescription>
         </Field>
         {state?.error && <FieldError>{state.error}</FieldError>}
       </FieldGroup>

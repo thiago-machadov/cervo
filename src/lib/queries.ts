@@ -1,5 +1,6 @@
 import "server-only"
 import { db } from "@/lib/db"
+import { getFriendIds } from "@/lib/friends"
 import { computeStreaks, dayKey, shiftDay } from "@/lib/dates"
 
 const feedInclude = {
@@ -64,15 +65,19 @@ export async function getCheckInOptions(userId: string) {
 export type CheckInOption = Awaited<ReturnType<typeof getCheckInOptions>>[number]
 
 /** Ids de quem divide pelo menos um clube com o usuário (inclui o próprio). */
+/** Quem o usuário acompanha: ele mesmo, quem divide clube com ele e os amigos. */
 async function circleUserIds(userId: string) {
-  const members = await db.clubMember.findMany({
-    where: { club: { members: { some: { userId } } } },
-    select: { userId: true },
-  })
-  return [...new Set([userId, ...members.map((m) => m.userId)])]
+  const [members, friends] = await Promise.all([
+    db.clubMember.findMany({
+      where: { club: { members: { some: { userId } } } },
+      select: { userId: true },
+    }),
+    getFriendIds(userId),
+  ])
+  return [...new Set([userId, ...members.map((m) => m.userId), ...friends])]
 }
 
-/** Feed: check-ins de quem divide clube com o usuário; com `clubId`, só dos membros daquele clube. */
+/** Feed: check-ins de quem divide clube com o usuário e dos amigos; com `clubId`, só dos membros daquele clube. */
 export async function getHomeFeed(userId: string, clubId?: string) {
   let ids = await circleUserIds(userId)
   if (clubId) {
@@ -277,4 +282,23 @@ export async function searchPublicClubs({ q, vagas, ordem = "membros" }: ClubSea
       isFull: club.maxMembers !== null && club._count.members >= club.maxMembers,
     }))
     .filter((club) => !vagas || !club.isFull)
+}
+
+/**
+ * Perfil de outro leitor. Qualquer pessoa logada com o link vê nome e botão de amizade;
+ * estatísticas e check-ins só aparecem para amigos e para quem divide clube com ele.
+ */
+export async function getPersonProfile(viewerId: string, personId: string) {
+  const person = await db.user.findUnique({ where: { id: personId }, select: { id: true, name: true, onboardedAt: true } })
+  if (!person) return null
+
+  const circle = await circleUserIds(viewerId)
+  const canSeeActivity = circle.includes(personId)
+  if (!canSeeActivity) return { person, canSeeActivity, stats: null, checkIns: [] }
+
+  const [stats, checkIns] = await Promise.all([
+    getUserStats(personId),
+    db.checkIn.findMany({ where: { userId: personId }, include: feedInclude, orderBy: { createdAt: "desc" }, take: 10 }),
+  ])
+  return { person, canSeeActivity, stats, checkIns }
 }

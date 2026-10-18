@@ -3,14 +3,14 @@
 import { useRef, useState } from "react"
 import { CameraIcon, ImageIcon, XIcon } from "@phosphor-icons/react/dist/ssr"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
-const MAX_SIDE = 900
 const QUALITY = 0.82
 
-/** Reduz a foto no próprio navegador (lado maior até 900 px, JPEG) antes do upload. */
-async function shrink(file: File): Promise<File> {
+/** Reduz a foto no próprio navegador (lado maior até `maxSide` px, JPEG) antes do upload. */
+async function shrink(file: File, maxSide: number): Promise<File> {
   const bitmap = await createImageBitmap(file)
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height))
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement("canvas")
   canvas.width = Math.round(bitmap.width * scale)
   canvas.height = Math.round(bitmap.height * scale)
@@ -18,14 +18,22 @@ async function shrink(file: File): Promise<File> {
   bitmap.close()
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", QUALITY))
   if (!blob) throw new Error("Falha ao processar a foto")
-  return new File([blob], "capa.jpg", { type: "image/jpeg" })
+  return new File([blob], "foto.jpg", { type: "image/jpeg" })
 }
 
 /**
- * Campo de capa: tirar foto (câmera traseira) ou escolher da galeria.
- * O arquivo final (já reduzido) vai no formulário como `coverFile`.
+ * Campo de foto: tirar foto (câmera traseira) ou escolher da galeria.
+ * O arquivo final (já reduzido) vai no formulário com o nome `name`.
+ * `variant="cover"` mostra a prévia em formato de capa (2:3); `"photo"`, quadrada.
  */
-export function CoverPicker() {
+export function CoverPicker({
+  name = "coverFile",
+  variant = "cover",
+}: {
+  name?: string
+  variant?: "cover" | "photo"
+} = {}) {
+  const maxSide = variant === "cover" ? 900 : 1280
   const formInput = useRef<HTMLInputElement>(null)
   const cameraInput = useRef<HTMLInputElement>(null)
   const galleryInput = useRef<HTMLInputElement>(null)
@@ -40,7 +48,7 @@ export function CoverPicker() {
     setBusy(true)
     setError(null)
     try {
-      const file = await shrink(picked).catch(() => picked)
+      const file = await shrink(picked, maxSide).catch(() => picked)
       const transfer = new DataTransfer()
       transfer.items.add(file)
       formInput.current.files = transfer.files
@@ -65,17 +73,17 @@ export function CoverPicker() {
 
   return (
     <div className="space-y-2">
-      <input ref={formInput} type="file" name="coverFile" accept="image/*" hidden />
+      <input ref={formInput} type="file" name={name} accept="image/*" hidden />
       <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={handlePick} />
       <input ref={galleryInput} type="file" accept="image/*" hidden onChange={handlePick} />
 
       <div className="flex items-center gap-3">
-        <div className="relative aspect-[2/3] w-16 shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-border">
+        <div className={cn("relative shrink-0", variant === "cover" ? "aspect-[2/3] w-16" : "aspect-square w-20", " overflow-hidden rounded-lg bg-muted ring-1 ring-border")}>
           {preview ? (
             <>
               {/* Pré-visualização local (blob:), por isso <img> e não next/image. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="Capa escolhida" className="size-full object-cover" />
+              <img src={preview} alt="Foto escolhida" className="size-full object-cover" />
               <button
                 type="button"
                 onClick={clear}

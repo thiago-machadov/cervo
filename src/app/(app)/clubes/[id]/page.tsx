@@ -150,12 +150,14 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
                   <span className="w-5 text-center text-sm font-semibold tabular-nums text-muted-foreground">
                     {index === 0 && row.pages > 0 ? <StarDoodle className="w-5" label="Primeiro lugar" /> : index + 1}
                   </span>
-                  <UserAvatar name={row.user.name} />
+                  <Link href={`/pessoas/${row.user.id}`} aria-label={`Perfil de ${row.user.name}`} className="shrink-0">
+                    <UserAvatar name={row.user.name} />
+                  </Link>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
+                    <Link href={`/pessoas/${row.user.id}`} className="block truncate text-sm font-medium">
                       {row.user.name}
                       {row.user.id === user.id && <span className="text-muted-foreground"> (você)</span>}
-                    </p>
+                    </Link>
                     <p className="text-xs text-muted-foreground">
                       {row.days} {row.days === 1 ? "dia" : "dias"} de check-in
                       {freeReading

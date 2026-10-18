@@ -63,6 +63,10 @@ model User {
   checkIns    CheckIn[]
   comments    Comment[]
   reactions   Reaction[]
+  feedbacks   Feedback[]
+  /// Pedidos de amizade que o usuário enviou / recebeu (amizade = pedido aceito)
+  friendRequestsSent     Friendship[] @relation("FriendRequester")
+  friendRequestsReceived Friendship[] @relation("FriendAddressee")
 }
 
 /// Livro cadastrado manualmente por um usuário.
@@ -161,6 +165,8 @@ model CheckIn {
   /// Minutos de leitura (opcional; usado por metas em minutos)
   minutes   Int?
   note      String?
+  /// Foto opcional do momento da leitura (caminho /fotos/... no R2)
+  photoUrl  String?
   day       String
   createdAt DateTime @default(now())
 
@@ -199,4 +205,48 @@ model Reaction {
 
   @@unique([checkInId, userId, emoji])
   @@index([checkInId])
+}
+
+enum FeedbackKind {
+  BUG
+  IDEA
+  PRAISE
+  OTHER
+}
+
+/// Feedback sobre o app enviado pelo próprio usuário (lido no Supabase Studio).
+model Feedback {
+  id        String       @id @default(cuid())
+  userId    String
+  kind      FeedbackKind
+  message   String
+  /// Navegador/aparelho, ajuda a reproduzir bugs
+  userAgent String?
+  createdAt DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
+/// Amizade entre dois leitores. Nasce como pedido (PENDING) e vira amizade quando o outro aceita.
+/// Existe no máximo uma linha por par: quem pede para alguém que já tinha pedido aceita o pedido existente.
+model Friendship {
+  id          String           @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  acceptedAt  DateTime?
+
+  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
 }

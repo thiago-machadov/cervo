@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import Link from "next/link"
-import { CaretRightIcon, DeviceMobileIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr"
+import { CaretRightIcon, ChatCircleDotsIcon, DeviceMobileIcon, SignOutIcon, UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
+import type { Icon } from "@phosphor-icons/react/lib"
 import { SpiralDoodle, ThreadDoodle } from "@/components/doodles"
 import { EditGoalDrawer } from "@/components/edit-goal-drawer"
 import { SubmitButton } from "@/components/submit-button"
@@ -14,6 +15,12 @@ import { getCurrentUser } from "@/lib/auth"
 import { getUserStats } from "@/lib/queries"
 
 export const metadata: Metadata = { title: "Perfil" }
+
+const LINKS: { href: string; icon: Icon; title: string; description: string }[] = [
+  { href: "/amigos", icon: UsersThreeIcon, title: "Amigos", description: "Pedidos de amizade e seu link para convidar" },
+  { href: "/feedback", icon: ChatCircleDotsIcon, title: "Mandar feedback", description: "Bugs, ideias e elogios sobre o app" },
+  { href: "/instalar", icon: DeviceMobileIcon, title: "Instalar o app", description: "Passo a passo para iPhone e Android" },
+]
 
 export default function ProfilePage() {
   return (
@@ -62,19 +69,24 @@ async function ProfileContent() {
           ))}
         </dl>
 
-        <Link
-          href="/instalar"
-          className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border/60 transition-transform active:scale-[0.99]"
-        >
-          <span className="flex size-11 items-center justify-center rounded-full bg-secondary text-primary">
-            <DeviceMobileIcon className="size-6" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold">Instalar o app</span>
-            <span className="block text-xs text-muted-foreground">Passo a passo para iPhone e Android</span>
-          </span>
-          <CaretRightIcon className="size-4 text-muted-foreground" />
-        </Link>
+        <nav className="space-y-3">
+          {LINKS.map(({ href, icon: LinkIcon, title, description }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border/60 transition-transform active:scale-[0.99]"
+            >
+              <span className="flex size-11 items-center justify-center rounded-full bg-secondary text-primary">
+                <LinkIcon className="size-6" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">{title}</span>
+                <span className="block text-xs text-muted-foreground">{description}</span>
+              </span>
+              <CaretRightIcon className="size-4 text-muted-foreground" />
+            </Link>
+          ))}
+        </nav>
 
         <ThreadDoodle className="mx-auto w-56 opacity-60" />
 
