@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-import { SignOutIcon } from "@phosphor-icons/react/dist/ssr"
+import Link from "next/link"
+import { CaretRightIcon, DeviceMobileIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr"
 import { SpiralDoodle, ThreadDoodle } from "@/components/doodles"
 import { EditGoalDrawer } from "@/components/edit-goal-drawer"
 import { PageHeader } from "@/components/page-header"
@@ -57,6 +58,20 @@ async function ProfileContent() {
             </div>
           ))}
         </dl>
+
+        <Link
+          href="/instalar"
+          className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border/60 transition-transform active:scale-[0.99]"
+        >
+          <span className="flex size-11 items-center justify-center rounded-full bg-secondary text-primary">
+            <DeviceMobileIcon className="size-6" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">Instalar o app</span>
+            <span className="block text-xs text-muted-foreground">Passo a passo para iPhone e Android</span>
+          </span>
+          <CaretRightIcon className="size-4 text-muted-foreground" />
+        </Link>
 
         <ThreadDoodle className="mx-auto w-56 opacity-60" />
 

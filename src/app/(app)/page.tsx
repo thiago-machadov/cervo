@@ -5,6 +5,7 @@ import { CheckInDrawer } from "@/components/check-in-drawer"
 import { DeerDoodle, StarDoodle, SunDoodle } from "@/components/doodles"
 import { ContinueReading } from "@/components/continue-reading"
 import { GoalCard } from "@/components/goal-card"
+import { InstallBanner } from "@/components/install-banner"
 import { PageSkeleton } from "@/components/page-skeleton"
 import { SectionHeader } from "@/components/section-header"
 import { StreakCard } from "@/components/streak-card"
@@ -81,6 +82,8 @@ async function TodayContent() {
           minutesToday={stats.minutesToday}
         />
       </div>
+
+      <InstallBanner />
 
       {reading.length > 0 && (
         <section>
