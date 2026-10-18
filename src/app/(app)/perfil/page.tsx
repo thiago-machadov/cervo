@@ -4,11 +4,11 @@ import Link from "next/link"
 import { CaretRightIcon, DeviceMobileIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr"
 import { SpiralDoodle, ThreadDoodle } from "@/components/doodles"
 import { EditGoalDrawer } from "@/components/edit-goal-drawer"
+import { SubmitButton } from "@/components/submit-button"
 import { ThemeSelector } from "@/components/theme-selector"
 import { PageHeader } from "@/components/page-header"
 import { PageSkeleton } from "@/components/page-skeleton"
 import { UserAvatar } from "@/components/user-avatar"
-import { Button } from "@/components/ui/button"
 import { signOut } from "@/app/actions/auth"
 import { getCurrentUser } from "@/lib/auth"
 import { getUserStats } from "@/lib/queries"
@@ -79,9 +79,9 @@ async function ProfileContent() {
         <ThreadDoodle className="mx-auto w-56 opacity-60" />
 
         <form action={signOut}>
-          <Button type="submit" variant="outline" className="h-11 w-full">
+          <SubmitButton variant="outline" className="h-11 w-full" pendingText="Saindo…">
             <SignOutIcon /> Sair
-          </Button>
+          </SubmitButton>
         </form>
       </div>
     </main>

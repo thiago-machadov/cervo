@@ -4,6 +4,7 @@ import Link from "next/link"
 import { BookCover } from "@/components/book-cover"
 import { BirdDoodle, SpiralClusterDoodle, StampFrame, StarDoodle } from "@/components/doodles"
 import { PageSkeleton } from "@/components/page-skeleton"
+import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
 import { joinClub } from "@/app/actions/clubs"
 import { getCurrentUser } from "@/lib/auth"
@@ -90,9 +91,9 @@ async function InviteContent({ params }: Pick<PageProps<"/convite/[code]">, "par
         </p>
       ) : (
         <form action={joinClub.bind(null, code)} className="relative">
-          <Button type="submit" size="lg" className="h-12 w-full text-base">
+          <SubmitButton size="lg" className="h-12 w-full text-base" pendingText="Entrando no clube…">
             Bora ler junto!
-          </Button>
+          </SubmitButton>
         </form>
       )}
     </main>

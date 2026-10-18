@@ -1,7 +1,7 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
-import { BookOpenIcon } from "@phosphor-icons/react/dist/ssr"
+import { useActionState, useEffect, useRef, useState } from "react"
+import { BookOpenIcon, CircleNotchIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover } from "@/components/book-cover"
 import { CoverPicker } from "@/components/cover-picker"
 import { BirdDoodle, BookDoodle, EnvelopeDoodle, FlockDoodle, SunDoodle } from "@/components/doodles"
@@ -15,6 +15,8 @@ import type { GoalType } from "@/lib/goals"
 import { cn } from "@/lib/utils"
 
 const STEPS = ["Meta", "Livro", "Clube"] as const
+/** Quem chegou por um convite não escolhe clube: entra direto no clube do convite. */
+const INVITE_STEPS = ["Meta", "Livro"] as const
 
 type Props = {
   initialStep: number
@@ -27,18 +29,19 @@ type Props = {
 
 export function OnboardingWizard({ initialStep, firstName, goal, book, inviteLink, next }: Props) {
   const [step, setStep] = useState(initialStep)
+  const steps = inviteLink ? INVITE_STEPS : STEPS
 
   return (
     <div className="flex min-h-dvh flex-col px-6 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
       <div className="space-y-2">
         <div className="flex gap-2" aria-hidden>
-          {STEPS.map((label, index) => (
+          {steps.map((label, index) => (
             <span key={label} className={cn("h-1.5 flex-1 rounded-full bg-border transition-colors", index <= step && "bg-primary")} />
           ))}
         </div>
         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>
-            Passo {step + 1} de {STEPS.length}
+            Passo {Math.min(step + 1, steps.length)} de {steps.length}
           </span>
           {step > 0 ? (
             <button type="button" onClick={() => setStep(step - 1)} className="text-primary">
@@ -56,7 +59,12 @@ export function OnboardingWizard({ initialStep, firstName, goal, book, inviteLin
 
       {step === 0 && <GoalStep firstName={firstName} goal={goal} onDone={() => setStep(1)} />}
       {step === 1 && <BookStep onDone={() => setStep(2)} />}
-      {step === 2 && <ClubStep book={book} inviteLink={inviteLink} next={next} />}
+      {step === 2 &&
+        (inviteLink ? (
+          <JoinInviteStep inviteLink={inviteLink} book={book} next={next} />
+        ) : (
+          <ClubStep book={book} inviteLink={inviteLink} next={next} />
+        ))}
     </div>
   )
 }
@@ -144,6 +152,42 @@ function BookStep({ onDone }: { onDone: () => void }) {
       </FieldGroup>
       <StepButton pending={pending}>Adicionar livro</StepButton>
     </form>
+  )
+}
+
+/** Conclui o onboarding entrando no clube do convite; se falhar (lotado, expirado), mostra a etapa do clube. */
+function JoinInviteStep({ inviteLink, book, next }: { inviteLink: string; book: Props["book"]; next: string }) {
+  const [error, setError] = useState<string | null>(null)
+  const started = useRef(false)
+
+  useEffect(() => {
+    if (started.current) return
+    started.current = true
+    const formData = new FormData()
+    formData.set("mode", "join")
+    formData.set("invite", inviteLink)
+    formData.set("next", next)
+    // Em caso de sucesso a action redireciona para o clube; só voltamos aqui se der erro.
+    finishOnboarding(undefined, formData).then((result) => {
+      if (result?.error) setError(result.error)
+    })
+  }, [inviteLink, next])
+
+  if (error) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <FieldError className="mt-8">{error}</FieldError>
+        <ClubStep book={book} next={next} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+      <FlockDoodle className="w-32" />
+      <p className="font-display text-2xl font-bold text-primary">Entrando no clube…</p>
+      <CircleNotchIcon className="size-6 animate-spin text-primary" />
+    </div>
   )
 }
 
