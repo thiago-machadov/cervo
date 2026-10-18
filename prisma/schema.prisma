@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum GoalType {
+  PAGES
+  MINUTES
+}
+
+enum LibraryStatus {
+  WANT
+  READING
+  DONE
+}
+
+enum ClubRole {
+  OWNER
+  MEMBER
+}
+
+/// Perfil do app. O id é o mesmo do usuário no Supabase Auth (auth.users.id).
+model User {
+  id          String    @id
+  name        String
+  email       String    @unique
+  goalType    GoalType?
+  dailyGoal   Int?
+  /// Preenchido quando o usuário conclui o onboarding
+  onboardedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  books       Book[]
+  library     LibraryItem[]
+  memberships ClubMember[]
+  clubsOwned  Club[]        @relation("ClubOwner")
+  invites     Invite[]
+  checkIns    CheckIn[]
+  comments    Comment[]
+}
+
+/// Livro cadastrado manualmente por um usuário.
+model Book {
+  id          String   @id @default(cuid())
+  title       String
+  author      String
+  totalPages  Int
+  coverUrl    String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy    User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  libraryItems LibraryItem[]
+  clubs        Club[]
+  checkIns     CheckIn[]
+}
+
+/// Livro na biblioteca de um usuário.
+model LibraryItem {
+  id          String        @id @default(cuid())
+  userId      String
+  bookId      String
+  status      LibraryStatus @default(WANT)
+  currentPage Int           @default(0)
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+}
+
+model Club {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  ownerId       String
+  bookId        String?
+  /// Quando o livro atual do clube foi definido (base do ranking)
+  bookStartedAt DateTime?
+  /// Meta: data limite para terminar o livro atual
+  goalEndDate   DateTime?
+  /// Meta: páginas por semana
+  weeklyPages   Int?
+  createdAt     DateTime  @default(now())
+
+  owner   User         @relation("ClubOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  book    Book?        @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  members ClubMember[]
+  invites Invite[]
+}
+
+model ClubMember {
+  id       String   @id @default(cuid())
+  clubId   String
+  userId   String
+  role     ClubRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clubId, userId])
+  @@index([userId])
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  clubId      String
+  createdById String
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  club      Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+/// Registro de leitura. day = data local (YYYY-MM-DD) usada para streaks.
+model CheckIn {
+  id        String   @id @default(cuid())
+  userId    String
+  bookId    String
+  fromPage  Int
+  toPage    Int
+  pagesRead Int
+  /// Minutos de leitura (opcional; usado por metas em minutos)
+  minutes   Int?
+  note      String?
+  day       String
+  createdAt DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book     Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  comments Comment[]
+
+  @@index([userId, day])
+  @@index([bookId, createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  checkInId String
+  userId    String
+  body      String
+  createdAt DateTime @default(now())
+
+  checkIn CheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([checkInId])
+}

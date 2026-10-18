@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cervo
 
-## Getting Started
+Cervo é um clube do livro mobile first (PWA) para leitores: biblioteca pessoal, check-ins diários de leitura com streaks, clubes do livro com metas, ranking, feed, comentários e convites por link.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router, Cache Components) + React 19
+- shadcn/ui sobre Base UI + Tailwind CSS v4
+- Supabase: **Auth** (e-mail e senha, via `@supabase/ssr`) e **Postgres**
+- Prisma 7 conectado direto no Postgres do Supabase (`@prisma/adapter-pg`), sem o SDK de dados do Supabase
+
+## Rodando localmente (Supabase local, precisa de Docker)
 
 ```bash
+npm install
+npm run supabase:start   # sobe Auth + Postgres locais (portas 554xx)
+npm run db:migrate       # aplica as migrations do Prisma
+npm run db:seed          # opcional: contas de exemplo (veja prisma/seed.ts)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O `.env` local aponta para o Supabase local (valores de `supabase status -o env`).
+E-mails de confirmação ficam no Mailpit: http://127.0.0.1:55424
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usando um projeto Supabase na nuvem
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Copie `.env.example` para `.env` e preencha com os dados do projeto (Connect → ORMs → Prisma e Project Settings → API Keys).
+2. Rode `npm run db:deploy` para criar as tabelas.
+3. Em Authentication → URL Configuration, configure o Site URL e adicione `https://SEU-DOMINIO/auth/confirm` nas Redirect URLs.
 
-## Learn More
+### Segurança
 
-To learn more about Next.js, take a look at the following resources:
+O Supabase expõe o schema `public` pela Data API com a chave pública. Todas as tabelas têm **RLS ligado e sem políticas**,
+o que bloqueia esse acesso; o Prisma conecta como dono do banco e não é afetado. **Toda tabela nova precisa de
+`ALTER TABLE "Nome" ENABLE ROW LEVEL SECURITY;` na migration.**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Estrutura
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `src/app/(auth)` — entrar e criar conta
+- `src/app/(app)` — Hoje, Biblioteca, Clubes, Perfil, check-in e convite
+- `src/app/actions` — Server Actions (sempre revalidam a sessão no servidor)
+- `src/lib/queries.ts` — leitura de dados (feed, ranking, streaks)
+- `src/lib/supabase/` — clientes do Supabase (só Auth) e renovação de sessão no proxy
+- `src/lib/session.ts` / `src/lib/auth.ts` — sessão verificada e perfil do usuário (tabela `User`, mesmo id do Supabase Auth)
+- `src/app/auth/confirm` — destino do link de confirmação de e-mail
+- Tema (cores cobalto/papel, fontes) em `src/app/globals.css` e `src/app/layout.tsx`
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O "dia" de um check-in usa o fuso `America/Sao_Paulo` (`src/lib/dates.ts`).
