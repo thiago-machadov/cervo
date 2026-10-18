@@ -87,7 +87,7 @@ function CheckEmail({ email, next }: { email: string; next?: string }) {
     <div className="space-y-6 rounded-3xl bg-card p-6 text-center ring-1 ring-border/60">
       <EnvelopeDoodle className="mx-auto w-28" />
       <div className="space-y-2">
-        <h2 className="font-display text-4xl font-bold text-primary">Confira seu e-mail</h2>
+        <h2 className="font-display text-3xl font-bold text-primary">Confira seu e-mail</h2>
         <p className="text-sm text-muted-foreground">
           Mandamos um link de confirmação para <span className="font-semibold text-foreground">{email}</span>. Abra o
           link para ativar sua conta e montar sua meta.

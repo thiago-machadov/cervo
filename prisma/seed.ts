@@ -7,8 +7,8 @@
 import "dotenv/config"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { createClient } from "@supabase/supabase-js"
-import { PrismaClient } from "../src/generated/prisma/client"
-import type { GoalType } from "../src/generated/prisma/enums"
+import { PrismaClient } from "../src/generated/prisma-node/client"
+import type { GoalType } from "../src/generated/prisma-node/enums"
 import { dayKey, shiftDay } from "../src/lib/dates"
 
 export const TEST_PASSWORD = "leitura-teste-123"
@@ -98,7 +98,8 @@ async function main() {
           pagesRead: toPage - page,
           minutes: userId === bruno.id ? 25 + Math.abs(offset) * 5 : null,
           day,
-          createdAt: new Date(`${day}T22:00:00Z`),
+          // 22h UTC do dia, mas nunca no futuro (o seed pode rodar de manhã).
+          createdAt: new Date(Math.min(Date.parse(`${day}T22:00:00Z`), Date.now() - 60 * 60 * 1000)),
           note: offset === 0 ? "Que capítulo! A relação das irmãs tá cada vez mais tensa." : null,
         },
       })

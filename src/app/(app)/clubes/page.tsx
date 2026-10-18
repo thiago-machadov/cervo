@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import Link from "next/link"
-import { ChevronRightIcon, PlusIcon } from "lucide-react"
-import { BookCover } from "@/components/book-cover"
+import { CaretRightIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr"
+import { ClubTile } from "@/components/book-cover"
 import { DoodleEmpty } from "@/components/doodle-empty"
 import { FlockDoodle } from "@/components/doodles"
 import { PageHeader } from "@/components/page-header"
@@ -32,9 +32,15 @@ async function ClubsContent() {
       <PageHeader
         title="Clubes"
         action={
-          <Button size="sm" render={<Link href="/clubes/novo" />} nativeButton={false}>
-            <PlusIcon /> Novo
-          </Button>
+          <div className="flex gap-2">
+            <Button size="icon-sm" variant="outline" render={<Link href="/clubes/explorar" />} nativeButton={false}>
+              <MagnifyingGlassIcon />
+              <span className="sr-only">Explorar clubes públicos</span>
+            </Button>
+            <Button size="sm" render={<Link href="/clubes/novo" />} nativeButton={false}>
+              <PlusIcon /> Novo
+            </Button>
+          </div>
         }
       />
 
@@ -43,11 +49,16 @@ async function ClubsContent() {
           className="mt-2"
           doodle={<FlockDoodle className="w-40" />}
           title="Ninguém voando junto"
-          description="Crie um clube e convide amigos para ler junto, ou peça um link de convite."
+          description="Crie um clube, encontre um público para entrar ou peça um link de convite."
           action={
-            <Button size="lg" render={<Link href="/clubes/novo" />} nativeButton={false}>
-              Criar clube
-            </Button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button size="lg" render={<Link href="/clubes/novo" />} nativeButton={false}>
+                Criar clube
+              </Button>
+              <Button size="lg" variant="outline" render={<Link href="/clubes/explorar" />} nativeButton={false}>
+                Explorar públicos
+              </Button>
+            </div>
           }
         />
       ) : (
@@ -55,15 +66,11 @@ async function ClubsContent() {
           {clubs.map((club) => (
             <li key={club.id}>
               <Link href={`/clubes/${club.id}`} className="flex items-center gap-4 rounded-2xl bg-card p-3 ring-1 ring-border/60 transition-transform active:scale-[0.99]">
-                {club.book ? (
-                  <BookCover title={club.book.title} coverUrl={club.book.coverUrl} className="w-16" />
-                ) : (
-                  <div className="halftone aspect-[2/3] w-16 shrink-0 rounded-lg bg-secondary text-primary/30" />
-                )}
+                <ClubTile name={club.name} className="w-16" />
                 <div className="min-w-0 flex-1 space-y-1">
-                  <p className="font-display truncate text-2xl font-bold text-primary">{club.name}</p>
+                  <p className="font-display line-clamp-2 text-lg font-bold text-primary">{club.name}</p>
                   <p className="truncate text-sm text-muted-foreground">
-                    {club.book ? `Lendo ${club.book.title}` : "Sem livro definido"}
+                    {club.readingMode === "FREE" ? "Leitura livre" : club.book ? `Lendo ${club.book.title}` : "Sem livro definido"}
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <AvatarGroup>
@@ -76,7 +83,7 @@ async function ClubsContent() {
                     </span>
                   </div>
                 </div>
-                <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
+                <CaretRightIcon className="size-4 shrink-0 text-muted-foreground" />
               </Link>
             </li>
           ))}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
-import { LogOutIcon } from "lucide-react"
+import { SignOutIcon } from "@phosphor-icons/react/dist/ssr"
 import { Button } from "@/components/ui/button"
 import { leaveClub } from "@/app/actions/clubs"
 
@@ -20,7 +20,7 @@ export function LeaveClubButton({ clubId, isOwner }: { clubId: string; isOwner: 
         if (confirm(message)) startTransition(() => leaveClub(clubId))
       }}
     >
-      <LogOutIcon /> {isOwner ? "Apagar clube" : "Sair do clube"}
+      <SignOutIcon /> {isOwner ? "Apagar clube" : "Sair do clube"}
     </Button>
   )
 }

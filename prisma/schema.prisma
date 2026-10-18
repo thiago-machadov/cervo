@@ -1,6 +1,15 @@
+/// Cliente do app: roda no Cloudflare Workers e também no `next dev` (o Turbopack trata o .wasm).
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
+  runtime  = "cloudflare"
+}
+
+/// Cliente para scripts em Node puro (seed via tsx), que não carregam o .wasm do modo Cloudflare.
+generator node {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma-node"
+  runtime  = "nodejs"
 }
 
 datasource db {
@@ -16,6 +25,18 @@ enum LibraryStatus {
   WANT
   READING
   DONE
+}
+
+enum ClubVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum ReadingMode {
+  /// Todos leem o livro do clube
+  FIXED
+  /// Cada membro lê o livro que quiser
+  FREE
 }
 
 enum ClubRole {
@@ -41,6 +62,7 @@ model User {
   invites     Invite[]
   checkIns    CheckIn[]
   comments    Comment[]
+  reactions   Reaction[]
 }
 
 /// Livro cadastrado manualmente por um usuário.
@@ -78,7 +100,7 @@ model LibraryItem {
 }
 
 model Club {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String
   description   String?
   ownerId       String
@@ -89,7 +111,12 @@ model Club {
   goalEndDate   DateTime?
   /// Meta: páginas por semana
   weeklyPages   Int?
-  createdAt     DateTime  @default(now())
+  /// PUBLIC aparece na busca e aceita entrada direta; PRIVATE só por convite
+  visibility    ClubVisibility @default(PRIVATE)
+  /// Limite de membros (null = sem limite)
+  maxMembers    Int?
+  readingMode   ReadingMode    @default(FIXED)
+  createdAt     DateTime       @default(now())
 
   owner   User         @relation("ClubOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   book    Book?        @relation(fields: [bookId], references: [id], onDelete: SetNull)
@@ -137,9 +164,10 @@ model CheckIn {
   day       String
   createdAt DateTime @default(now())
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book     Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  comments Comment[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  reactions Reaction[]
 
   @@index([userId, day])
   @@index([bookId, createdAt])
@@ -155,5 +183,20 @@ model Comment {
   checkIn CheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([checkInId])
+}
+
+/// Reação (emoji) de um usuário a um check-in do feed.
+model Reaction {
+  id        String   @id @default(cuid())
+  checkInId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  checkIn CheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([checkInId, userId, emoji])
   @@index([checkInId])
 }

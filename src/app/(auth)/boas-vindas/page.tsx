@@ -17,20 +17,20 @@ export default function WelcomePage({ searchParams }: PageProps<"/boas-vindas">)
       </header>
 
       <div className="flex flex-1 flex-col justify-center py-6">
-        <DeerDoodle className="mx-auto w-28" />
-        <h1 className="font-display mt-2 text-center text-[clamp(5rem,30vw,7.5rem)] font-bold text-primary">Cervo</h1>
-        <p className="text-center text-sm font-medium text-muted-foreground">Leia junto. Todo dia, um pouco.</p>
+        <h1 className="sr-only">Cervo</h1>
+        <DeerDoodle className="mx-auto w-40" label="Cervo" />
+        <p className="mt-4 text-center text-base font-medium text-muted-foreground">Leia junto. Todo dia, um pouco.</p>
 
         <div className="relative mx-auto mt-4 h-44 w-full max-w-[19rem]">
           <SunDoodle className="absolute top-0 right-4 w-14" />
           <BookDoodle className="absolute bottom-8 left-1/2 w-40 -translate-x-1/2" />
           <ThreadDoodle className="absolute bottom-0 left-1/2 w-56 -translate-x-1/2 opacity-60" />
-          <span className="font-display absolute bottom-2 -left-1 flex size-[4.5rem] -rotate-6 items-center justify-center rounded-full bg-primary text-center text-base leading-none font-bold text-primary-foreground">
+          <span className="font-display absolute bottom-2 -left-1 flex size-[4.5rem] -rotate-6 items-center justify-center rounded-full bg-primary text-center text-[0.68rem] leading-tight font-bold text-primary-foreground">
             Check-in
             <br />
             diário
           </span>
-          <span className="font-display absolute top-16 -right-1 flex h-14 w-22 rotate-6 items-center justify-center rounded-[50%] bg-primary text-center text-base leading-none font-bold text-primary-foreground">
+          <span className="font-display absolute top-16 -right-1 flex h-14 w-22 rotate-6 items-center justify-center rounded-[50%] bg-primary text-center text-[0.68rem] leading-tight font-bold text-primary-foreground">
             Com os
             <br />
             amigos

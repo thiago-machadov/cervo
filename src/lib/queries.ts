@@ -6,6 +6,7 @@ const feedInclude = {
   user: { select: { id: true, name: true } },
   book: { select: { id: true, title: true, author: true, totalPages: true, coverUrl: true } },
   _count: { select: { comments: true } },
+  reactions: { select: { emoji: true, userId: true } },
 } as const
 
 export async function getUserStats(userId: string) {
@@ -71,8 +72,16 @@ async function circleUserIds(userId: string) {
   return [...new Set([userId, ...members.map((m) => m.userId)])]
 }
 
-export async function getHomeFeed(userId: string) {
-  const ids = await circleUserIds(userId)
+/** Feed: check-ins de quem divide clube com o usuário; com `clubId`, só dos membros daquele clube. */
+export async function getHomeFeed(userId: string, clubId?: string) {
+  let ids = await circleUserIds(userId)
+  if (clubId) {
+    const members = await db.clubMember.findMany({
+      where: { clubId, club: { members: { some: { userId } } } },
+      select: { userId: true },
+    })
+    ids = members.map((m) => m.userId)
+  }
   return db.checkIn.findMany({
     where: { userId: { in: ids } },
     include: feedInclude,
@@ -106,23 +115,31 @@ export async function getClubDetail(clubId: string, userId: string) {
   })
   if (!club) return null
 
+  const freeReading = club.readingMode === "FREE"
   const memberIds = club.members.map((m) => m.userId)
+  // Início do período do ranking (quando o livro ou o modo de leitura foi definido).
   const since = club.bookStartedAt ?? club.createdAt
   const sinceDay = dayKey(since)
+  const weekStart = shiftDay(dayKey(), -6)
 
-  const [bookCheckIns, memberDays, progress] = await Promise.all([
-    club.bookId
+  const [periodCheckIns, memberDays, progress] = await Promise.all([
+    // Leitura livre: qualquer livro dos membros. Livro fixo: só o livro do clube.
+    freeReading || club.bookId
       ? db.checkIn.findMany({
-          where: { bookId: club.bookId, userId: { in: memberIds }, createdAt: { gte: since } },
+          where: {
+            userId: { in: memberIds },
+            createdAt: { gte: since },
+            ...(freeReading ? {} : { bookId: club.bookId! }),
+          },
           include: feedInclude,
           orderBy: { createdAt: "desc" },
         })
       : Promise.resolve([]),
     db.checkIn.findMany({
       where: { userId: { in: memberIds } },
-      select: { userId: true, day: true },
+      select: { userId: true, day: true, pagesRead: true },
     }),
-    club.bookId
+    !freeReading && club.bookId
       ? db.libraryItem.findMany({
           where: { bookId: club.bookId, userId: { in: memberIds } },
           select: { userId: true, currentPage: true },
@@ -132,30 +149,36 @@ export async function getClubDetail(clubId: string, userId: string) {
 
   const ranking = club.members
     .map((member) => {
-      const pages = bookCheckIns
-        .filter((c) => c.userId === member.userId)
-        .reduce((sum, c) => sum + c.pagesRead, 0)
+      const own = periodCheckIns.filter((c) => c.userId === member.userId)
+      const pages = own.reduce((sum, c) => sum + c.pagesRead, 0)
       const memberCheckInDays = memberDays.filter((c) => c.userId === member.userId).map((c) => c.day)
-      // Dias de check-in contam desde que o livro foi escolhido; a streak é a geral do usuário.
+      // Dias de check-in contam desde o início do período; a streak é a geral do usuário.
       const days = new Set(memberCheckInDays.filter((day) => day >= sinceDay)).size
       const streak = computeStreaks(memberCheckInDays).current
       const currentPage = progress.find((p) => p.userId === member.userId)?.currentPage ?? 0
-      return { user: member.user, role: member.role, pages, days, currentPage, streak }
+      // Na leitura livre, mostra o livro do check-in mais recente da pessoa.
+      const currentBook = own[0]?.book.title ?? null
+      return { user: member.user, role: member.role, pages, days, currentPage, currentBook, streak }
     })
     .sort((a, b) => b.pages - a.pages || b.days - a.days)
 
-  return { club, ranking, feed: bookCheckIns.slice(0, 30) }
+  const myWeekPages = memberDays
+    .filter((c) => c.userId === userId && c.day >= weekStart)
+    .reduce((sum, c) => sum + c.pagesRead, 0)
+
+  return { club, ranking, feed: periodCheckIns.slice(0, 30), freeReading, myWeekPages }
 }
 
 /** Página esperada hoje segundo a meta do clube (null se não houver meta). */
 export function expectedPage(club: {
+  readingMode: "FIXED" | "FREE"
   bookStartedAt: Date | null
   createdAt: Date
   goalEndDate: Date | null
   weeklyPages: number | null
   book: { totalPages: number } | null
 }) {
-  if (!club.book) return null
+  if (club.readingMode === "FREE" || !club.book) return null
   const start = (club.bookStartedAt ?? club.createdAt).getTime()
   const elapsed = Math.max(0, Date.now() - start)
   const total = club.book.totalPages
@@ -211,4 +234,47 @@ export function getInvite(code: string) {
       },
     },
   })
+}
+
+export type ClubSearch = { q?: string; vagas?: boolean; ordem?: "membros" | "recentes" }
+
+/** Clubes públicos para a busca, com filtro de texto, "só com vagas" e ordenação. */
+export async function searchPublicClubs({ q, vagas, ordem = "membros" }: ClubSearch, userId: string) {
+  const text = q?.trim()
+  const clubs = await db.club.findMany({
+    where: {
+      visibility: "PUBLIC",
+      ...(text
+        ? {
+            OR: [
+              { name: { contains: text, mode: "insensitive" } },
+              { description: { contains: text, mode: "insensitive" } },
+              { book: { title: { contains: text, mode: "insensitive" } } },
+              { book: { author: { contains: text, mode: "insensitive" } } },
+            ],
+          }
+        : {}),
+    },
+    include: {
+      book: { select: { title: true, author: true } },
+      members: { where: { userId }, select: { id: true } },
+      _count: { select: { members: true } },
+    },
+    orderBy: ordem === "recentes" ? { createdAt: "desc" } : { members: { _count: "desc" } },
+    take: 50,
+  })
+
+  return clubs
+    .map((club) => ({
+      id: club.id,
+      name: club.name,
+      description: club.description,
+      book: club.book,
+      readingMode: club.readingMode,
+      memberCount: club._count.members,
+      maxMembers: club.maxMembers,
+      isMember: club.members.length > 0,
+      isFull: club.maxMembers !== null && club._count.members >= club.maxMembers,
+    }))
+    .filter((club) => !vagas || !club.isFull)
 }

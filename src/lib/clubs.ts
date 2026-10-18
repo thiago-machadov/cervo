@@ -21,16 +21,51 @@ export function parseInviteCode(input: string) {
   return match ? match[1] : trimmed
 }
 
-/** Coloca o usuário no clube do convite. Devolve o id do clube, ou null se o convite for inválido. */
-export async function acceptInvite(userId: string, code: string) {
-  const invite = await db.invite.findUnique({ where: { code }, include: { club: true } })
-  if (!invite || (invite.expiresAt && invite.expiresAt < new Date())) return null
+export type JoinResult = { clubId: string } | { error: "invalid" | "full" | "private" }
 
-  await db.clubMember.upsert({
-    where: { clubId_userId: { clubId: invite.clubId, userId } },
-    update: {},
-    create: { clubId: invite.clubId, userId },
+/**
+ * Coloca o usuário no clube respeitando o limite de membros.
+ * Quem já é membro sempre "entra" (nada muda).
+ */
+export async function addMember(userId: string, clubId: string): Promise<JoinResult> {
+  const club = await db.club.findUnique({
+    where: { id: clubId },
+    select: { id: true, bookId: true, maxMembers: true, _count: { select: { members: true } } },
   })
-  if (invite.club.bookId) await ensureReading(userId, invite.club.bookId)
-  return invite.clubId
+  if (!club) return { error: "invalid" }
+
+  const existing = await db.clubMember.findUnique({ where: { clubId_userId: { clubId, userId } } })
+  if (existing) return { clubId }
+  if (club.maxMembers !== null && club._count.members >= club.maxMembers) return { error: "full" }
+
+  await db.clubMember.create({ data: { clubId, userId } })
+  if (club.bookId) await ensureReading(userId, club.bookId)
+  return { clubId }
+}
+
+/** Entrada por link de convite (vale para clubes públicos e privados). */
+export async function acceptInvite(userId: string, code: string): Promise<JoinResult> {
+  const invite = await db.invite.findUnique({ where: { code }, select: { clubId: true, expiresAt: true } })
+  if (!invite || (invite.expiresAt && invite.expiresAt < new Date())) return { error: "invalid" }
+  return addMember(userId, invite.clubId)
+}
+
+/** Entrada direta pela busca: só clubes públicos. */
+export async function joinPublicClub(userId: string, clubId: string): Promise<JoinResult> {
+  const club = await db.club.findUnique({ where: { id: clubId }, select: { visibility: true } })
+  if (!club) return { error: "invalid" }
+  if (club.visibility !== "PUBLIC") return { error: "private" }
+  return addMember(userId, clubId)
+}
+
+/** "3 de 10 membros · Público" */
+export function clubMembersLabel(count: number, maxMembers: number | null, visibility?: "PUBLIC" | "PRIVATE") {
+  const members = maxMembers ? `${count} de ${maxMembers} membros` : `${count} ${count === 1 ? "membro" : "membros"}`
+  return visibility ? `${members} · ${visibility === "PUBLIC" ? "Público" : "Privado"}` : members
+}
+
+export function joinErrorMessage(error: "invalid" | "full" | "private") {
+  if (error === "full") return "Esse clube está lotado"
+  if (error === "private") return "Esse clube é privado: entre por um link de convite"
+  return "Convite inválido ou expirado"
 }

@@ -5,7 +5,7 @@ import { refresh } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
-import { acceptInvite, ensureReading } from "@/lib/clubs"
+import { acceptInvite, ensureReading, joinPublicClub as joinPublic } from "@/lib/clubs"
 import { db } from "@/lib/db"
 import type { ActionState } from "@/lib/utils-text"
 
@@ -24,6 +24,12 @@ const clubSchema = z.object({
   bookId: z.string().optional(),
   goalEndDate: optionalDate,
   weeklyPages: optionalInt,
+  visibility: z.enum(["PRIVATE", "PUBLIC"]).default("PRIVATE"),
+  readingMode: z.enum(["FIXED", "FREE"]).default("FIXED"),
+  maxMembers: z.preprocess(
+    (v) => (v === "" || v == null ? undefined : v),
+    z.coerce.number().int().min(2, "O limite precisa ser de pelo menos 2 pessoas").max(1000, "Limite alto demais").optional()
+  ),
 })
 
 /** O usuário só pode escolher livros que estão na própria biblioteca. */
@@ -43,8 +49,10 @@ export async function createClub(_prev: ActionState, formData: FormData): Promis
   const parsed = clubSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0]?.message }
 
-  const { name, description, goalEndDate, weeklyPages } = parsed.data
-  const bookId = await bookFromLibrary(userId, parsed.data.bookId)
+  const { name, description, weeklyPages, visibility, maxMembers, readingMode } = parsed.data
+  // Na leitura livre não existe livro do clube nem data final.
+  const bookId = readingMode === "FIXED" ? await bookFromLibrary(userId, parsed.data.bookId) : null
+  const goalEndDate = readingMode === "FIXED" ? parsed.data.goalEndDate : undefined
 
   const club = await db.club.create({
     data: {
@@ -55,6 +63,9 @@ export async function createClub(_prev: ActionState, formData: FormData): Promis
       bookStartedAt: bookId ? new Date() : null,
       goalEndDate: goalDate(goalEndDate),
       weeklyPages: weeklyPages ?? null,
+      visibility,
+      maxMembers: maxMembers ?? null,
+      readingMode,
       members: { create: { userId, role: "OWNER" } },
     },
   })
@@ -75,8 +86,13 @@ export async function updateClub(_prev: ActionState, formData: FormData): Promis
   const parsed = clubSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0]?.message }
 
-  const { name, description, goalEndDate, weeklyPages } = parsed.data
-  const bookId = (await bookFromLibrary(userId, parsed.data.bookId)) ?? club.bookId
+  const { name, description, weeklyPages, visibility, maxMembers, readingMode } = parsed.data
+  const goalEndDate = readingMode === "FIXED" ? parsed.data.goalEndDate : undefined
+  if (maxMembers !== undefined && maxMembers < club.members.length) {
+    return { error: `O clube já tem ${club.members.length} membros; o limite não pode ser menor que isso` }
+  }
+  const bookId = readingMode === "FIXED" ? ((await bookFromLibrary(userId, parsed.data.bookId)) ?? club.bookId) : null
+  const modeChanged = readingMode !== club.readingMode
   const bookChanged = bookId !== club.bookId
 
   await db.club.update({
@@ -85,9 +101,13 @@ export async function updateClub(_prev: ActionState, formData: FormData): Promis
       name,
       description: description || null,
       bookId,
-      bookStartedAt: bookChanged ? new Date() : club.bookStartedAt,
+      // Início do período do ranking: muda quando troca o livro ou o modo de leitura.
+      bookStartedAt: bookChanged || modeChanged ? new Date() : club.bookStartedAt,
       goalEndDate: goalDate(goalEndDate),
       weeklyPages: weeklyPages ?? null,
+      visibility,
+      maxMembers: maxMembers ?? null,
+      readingMode,
     },
   })
   if (bookChanged && bookId) {
@@ -122,8 +142,16 @@ export async function createInvite(clubId: string): Promise<{ code?: string; err
 
 export async function joinClub(code: string) {
   const userId = await requireUserId()
-  const clubId = await acceptInvite(userId, code)
-  redirect(clubId ? `/clubes/${clubId}` : `/convite/${code}`)
+  const result = await acceptInvite(userId, code)
+  redirect("clubId" in result ? `/clubes/${result.clubId}` : `/convite/${code}`)
+}
+
+/** Entrar num clube público a partir da busca. */
+export async function joinPublicClub(clubId: string): Promise<{ error?: string } | void> {
+  const userId = await requireUserId()
+  const result = await joinPublic(userId, clubId)
+  if ("error" in result) return { error: result.error === "full" ? "Esse clube lotou" : "Não foi possível entrar nesse clube" }
+  redirect(`/clubes/${result.clubId}`)
 }
 
 export async function leaveClub(clubId: string) {

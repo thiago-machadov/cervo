@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ChevronLeftIcon } from "lucide-react"
+import { CaretLeftIcon } from "@phosphor-icons/react/dist/ssr"
 import { Button } from "@/components/ui/button"
 
 export function AuthHeader({ title, subtitle, next }: { title: string; subtitle: string; next?: string }) {
@@ -13,11 +13,11 @@ export function AuthHeader({ title, subtitle, next }: { title: string; subtitle:
         render={<Link href={`/boas-vindas${query}`} />}
         nativeButton={false}
       >
-        <ChevronLeftIcon className="size-5" />
+        <CaretLeftIcon className="size-5" />
         <span className="sr-only">Voltar</span>
       </Button>
       <div className="space-y-2">
-        <h1 className="font-display text-6xl font-bold text-primary">{title}</h1>
+        <h1 className="font-display text-4xl font-bold text-primary">{title}</h1>
         <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
     </div>

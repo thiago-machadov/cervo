@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import Link from "next/link"
-import { ChevronRightIcon } from "lucide-react"
+import { CaretRightIcon } from "@phosphor-icons/react/dist/ssr"
 import { AddBookDrawer } from "@/components/add-book-drawer"
 import { BookCover } from "@/components/book-cover"
 import { DoodleEmpty } from "@/components/doodle-empty"
@@ -83,7 +83,7 @@ async function LibraryContent() {
                                 <p className="text-xs text-muted-foreground">{item.book.totalPages} páginas</p>
                               )}
                             </div>
-                            <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
+                            <CaretRightIcon className="size-4 shrink-0 text-muted-foreground" />
                           </Link>
                         </li>
                       )

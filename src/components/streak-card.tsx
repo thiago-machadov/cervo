@@ -24,7 +24,7 @@ export function StreakCard({
           <p className="text-xs font-semibold tracking-widest uppercase opacity-70">Sequência atual</p>
           <p className="flex items-baseline gap-2">
             <span className="font-display text-7xl font-bold tabular-nums">{current}</span>
-            <span className="font-display text-2xl">{current === 1 ? "dia" : "dias"}</span>
+            <span className="font-display text-xl">{current === 1 ? "dia" : "dias"}</span>
           </p>
         </div>
         <FlameDoodle className={cn("relative w-11 text-primary-foreground", !readToday && "opacity-40")} />

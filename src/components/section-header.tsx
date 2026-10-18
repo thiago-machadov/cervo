@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRightIcon } from "lucide-react"
+import { ArrowRightIcon } from "@phosphor-icons/react/dist/ssr"
 
 export function SectionHeader({ title, href, linkLabel = "Ver todos" }: { title: string; href?: string; linkLabel?: string }) {
   return (

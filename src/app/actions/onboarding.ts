@@ -4,7 +4,7 @@ import { refresh } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
-import { acceptInvite, parseInviteCode } from "@/lib/clubs"
+import { acceptInvite, joinErrorMessage, parseInviteCode } from "@/lib/clubs"
 import { db } from "@/lib/db"
 import { safeNext } from "@/lib/redirects"
 import type { ActionState } from "@/lib/utils-text"
@@ -79,9 +79,9 @@ export async function finishOnboarding(_prev: ActionState, formData: FormData): 
   const input = parsed.data
 
   if (input.mode === "join") {
-    const clubId = await acceptInvite(userId, parseInviteCode(input.invite))
-    if (!clubId) return { error: "Convite inválido ou expirado" }
-    destination = `/clubes/${clubId}`
+    const result = await acceptInvite(userId, parseInviteCode(input.invite))
+    if ("error" in result) return { error: joinErrorMessage(result.error) }
+    destination = `/clubes/${result.clubId}`
   } else if (input.mode === "create") {
     const bookId = user.library[0]!.bookId
     const club = await db.club.create({

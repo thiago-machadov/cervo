@@ -5,6 +5,7 @@ import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { dayKey } from "@/lib/dates"
+import { isReaction } from "@/lib/reactions"
 import type { ActionState } from "@/lib/utils-text"
 
 const checkInSchema = z.object({
@@ -68,6 +69,18 @@ export async function createCheckIn(_prev: ActionState, formData: FormData): Pro
   return { ok: true }
 }
 
+/** Só o autor ou quem divide um clube com ele pode comentar/reagir num check-in. */
+async function canInteract(userId: string, checkInId: string) {
+  const checkIn = await db.checkIn.findUnique({ where: { id: checkInId }, select: { userId: true } })
+  if (!checkIn) return false
+  if (checkIn.userId === userId) return true
+  const shared = await db.clubMember.findFirst({
+    where: { userId, club: { members: { some: { userId: checkIn.userId } } } },
+    select: { id: true },
+  })
+  return Boolean(shared)
+}
+
 const commentSchema = z.object({
   checkInId: z.string().min(1),
   body: z.string().trim().min(1, "Escreva um comentário").max(1000),
@@ -79,19 +92,21 @@ export async function addComment(_prev: ActionState, formData: FormData): Promis
   if (!parsed.success) return { error: parsed.error.issues[0]?.message }
 
   const { checkInId, body } = parsed.data
-  const checkIn = await db.checkIn.findUnique({ where: { id: checkInId }, select: { userId: true } })
-  if (!checkIn) return { error: "Check-in não encontrado" }
-
-  // Só quem divide um clube com o autor (ou o próprio autor) pode comentar.
-  if (checkIn.userId !== userId) {
-    const shared = await db.clubMember.findFirst({
-      where: { userId, club: { members: { some: { userId: checkIn.userId } } } },
-      select: { id: true },
-    })
-    if (!shared) return { error: "Você não pode comentar neste check-in" }
-  }
+  if (!(await canInteract(userId, checkInId))) return { error: "Você não pode comentar neste check-in" }
 
   await db.comment.create({ data: { checkInId, userId, body } })
   refresh()
   return { ok: true }
+}
+
+/** Liga/desliga uma reação do usuário num check-in. */
+export async function toggleReaction(checkInId: string, emoji: string) {
+  const userId = await requireUserId()
+  if (!isReaction(emoji) || !(await canInteract(userId, checkInId))) return
+
+  const where = { checkInId_userId_emoji: { checkInId, userId, emoji } }
+  const existing = await db.reaction.findUnique({ where })
+  if (existing) await db.reaction.delete({ where })
+  else await db.reaction.create({ data: { checkInId, userId, emoji } })
+  refresh()
 }

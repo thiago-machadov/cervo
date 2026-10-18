@@ -47,7 +47,7 @@ export function GoalPicker({ defaultType = "PAGES", defaultValue }: { defaultTyp
                 selected && "bg-primary text-primary-foreground ring-primary"
               )}
             >
-              <span className="font-display text-5xl font-bold">{preset}</span>
+              <span className="font-display text-4xl font-bold">{preset}</span>
               <span className={cn("text-xs text-muted-foreground", selected && "text-primary-foreground/80")}>
                 {goalUnit(type, preset)} por dia
               </span>

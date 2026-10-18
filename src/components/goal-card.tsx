@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { TargetIcon } from "lucide-react"
+import { TargetIcon } from "@phosphor-icons/react/dist/ssr"
 import { StampFrame, StarDoodle, SunDoodle } from "@/components/doodles"
 import { goalUnit } from "@/lib/goals"
 
@@ -35,15 +35,15 @@ export function GoalCard({
         <div>
           <p className="text-[0.7rem] font-semibold tracking-widest text-primary uppercase">Meta de hoje</p>
           <p className="flex items-baseline gap-1">
-            <span className="font-display text-4xl font-bold text-primary tabular-nums">{done}</span>
-            <span className="font-display text-xl text-muted-foreground">/ {dailyGoal}</span>
+            <span className="font-display text-3xl font-bold text-primary tabular-nums">{done}</span>
+            <span className="font-display text-lg text-muted-foreground">/ {dailyGoal}</span>
             <span className="ml-1 text-sm text-muted-foreground">{goalUnit(goalType, dailyGoal)}</span>
           </p>
         </div>
         {remaining === 0 ? (
           <StampFrame className="h-20 w-15 shrink-0 -rotate-6">
             <StarDoodle className="w-4" />
-            <span className="font-display text-[0.7rem] leading-none">
+            <span className="font-display text-[0.55rem] leading-none">
               Meta
               <br />
               batida

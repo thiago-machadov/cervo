@@ -26,9 +26,9 @@ async function CheckInContent({ params }: Pick<PageProps<"/checkin/[id]">, "para
 
   return (
     <main>
-      <PageHeader title="Check-in" backHref="/" />
+      <PageHeader title="Check-in" backHref="/feed" />
       <div className="px-4 pt-2">
-        <FeedItem checkIn={checkIn} linkToDetail={false} />
+        <FeedItem checkIn={checkIn} viewerId={user.id} linkToDetail={false} />
       </div>
 
       <section className="space-y-4 px-4 py-6">

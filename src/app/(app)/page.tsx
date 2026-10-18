@@ -1,11 +1,9 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { BookPlusIcon } from "lucide-react"
+import { BookOpenTextIcon } from "@phosphor-icons/react/dist/ssr"
 import { CheckInDrawer } from "@/components/check-in-drawer"
-import { DoodleEmpty } from "@/components/doodle-empty"
-import { BirdDoodle, CervoLogo, StarDoodle, SunDoodle } from "@/components/doodles"
+import { DeerDoodle, StarDoodle, SunDoodle } from "@/components/doodles"
 import { ContinueReading } from "@/components/continue-reading"
-import { FeedList } from "@/components/feed-item"
 import { GoalCard } from "@/components/goal-card"
 import { PageSkeleton } from "@/components/page-skeleton"
 import { SectionHeader } from "@/components/section-header"
@@ -14,7 +12,7 @@ import { UserAvatar } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
 import { getCurrentUser } from "@/lib/auth"
 import { APP_TIME_ZONE } from "@/lib/dates"
-import { getCheckInOptions, getHomeFeed, getLibrary, getUserStats } from "@/lib/queries"
+import { getCheckInOptions, getLibrary, getUserStats } from "@/lib/queries"
 
 export default function TodayPage() {
   return (
@@ -33,10 +31,9 @@ function greeting() {
 
 async function TodayContent() {
   const user = await getCurrentUser()
-  const [stats, options, feed, library] = await Promise.all([
+  const [stats, options, library] = await Promise.all([
     getUserStats(user.id),
     getCheckInOptions(user.id),
-    getHomeFeed(user.id),
     getLibrary(user.id),
   ])
   const reading = library.filter((item) => item.status === "READING")
@@ -46,7 +43,7 @@ async function TodayContent() {
     <main className="space-y-6 pb-4">
       <header className="space-y-5 px-5 pt-[calc(env(safe-area-inset-top)+1rem)]">
         <div className="flex items-center justify-between">
-          <CervoLogo size="sm" />
+          <DeerDoodle className="w-10" label="Cervo" />
           <Link href="/perfil" aria-label="Perfil">
             <UserAvatar name={user.name} className="size-10 ring-2 ring-card" />
           </Link>
@@ -69,7 +66,7 @@ async function TodayContent() {
             goalType={user.goalType}
             trigger={
               <Button size="lg" className="relative h-12 w-full bg-primary-foreground text-base font-semibold text-primary hover:bg-primary-foreground/90">
-                <BookPlusIcon className="size-5" /> Fazer check-in
+                <BookOpenTextIcon className="size-5" /> Fazer check-in
               </Button>
             }
           />
@@ -98,18 +95,6 @@ async function TodayContent() {
         <Stat label="Livros lidos" value={stats.booksDone} />
       </section>
 
-      <section>
-        <SectionHeader title="Atividade dos seus clubes" href="/clubes" linkLabel="Clubes" />
-        {feed.length === 0 ? (
-          <DoodleEmpty
-            doodle={<BirdDoodle className="w-40" />}
-            title="Céu limpo por aqui"
-            description="Faça um check-in ou entre num clube para ver a leitura dos seus amigos."
-          />
-        ) : (
-          <FeedList items={feed} />
-        )}
-      </section>
     </main>
   )
 }

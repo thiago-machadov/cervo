@@ -1,7 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
-import { Trash2Icon } from "lucide-react"
+import { TrashIcon } from "@phosphor-icons/react/dist/ssr"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { removeFromLibrary, setLibraryStatus } from "@/app/actions/library"
@@ -40,7 +40,7 @@ export function RemoveFromLibraryButton({ itemId }: { itemId: string }) {
         if (confirm("Remover este livro da sua biblioteca?")) startTransition(() => removeFromLibrary(itemId))
       }}
     >
-      <Trash2Icon /> Remover da biblioteca
+      <TrashIcon /> Remover da biblioteca
     </Button>
   )
 }

@@ -130,12 +130,12 @@
   }
 }
 @layer utilities {
-  /** Títulos no estilo pôster: condensada, caixa alta. */
+  /** Títulos no estilo pôster: serifada (Roboto Slab), caixa alta. */
   .font-display {
     font-family: var(--font-display);
     text-transform: uppercase;
-    letter-spacing: 0.01em;
-    line-height: 0.95;
+    letter-spacing: -0.01em;
+    line-height: 1.02;
   }
 
   /** Retícula de meio-tom (halftone) usada como textura decorativa. */

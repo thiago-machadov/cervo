@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next"
-import { Barlow_Condensed, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google"
+import { Geist_Mono, Noto_Sans, Roboto_Slab } from "next/font/google"
 import { CrayonDefs } from "@/components/doodles/crayon-defs"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
-const sans = Plus_Jakarta_Sans({
+const sans = Noto_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
 })
 
-const display = Barlow_Condensed({
+const display = Roboto_Slab({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["600", "700"],

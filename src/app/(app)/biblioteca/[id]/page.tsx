@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
-import { BookPlusIcon } from "lucide-react"
+import { BookOpenTextIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover } from "@/components/book-cover"
 import { CheckInDrawer } from "@/components/check-in-drawer"
 import { FeedList } from "@/components/feed-item"
@@ -66,7 +66,7 @@ async function LibraryItemContent({ params }: Pick<PageProps<"/biblioteca/[id]">
             goalType={user.goalType}
             trigger={
               <Button size="lg" className="h-12 w-full text-base">
-                <BookPlusIcon className="size-5" /> Registrar leitura
+                <BookOpenTextIcon className="size-5" /> Registrar leitura
               </Button>
             }
           />
@@ -78,7 +78,7 @@ async function LibraryItemContent({ params }: Pick<PageProps<"/biblioteca/[id]">
         {checkIns.length === 0 ? (
           <p className="px-5 py-6 text-sm text-muted-foreground">Nenhum check-in neste livro ainda.</p>
         ) : (
-          <FeedList items={checkIns} />
+          <FeedList items={checkIns} viewerId={user.id} />
         )}
       </section>
 

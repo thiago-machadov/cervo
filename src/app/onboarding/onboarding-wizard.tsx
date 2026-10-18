@@ -1,7 +1,7 @@
 "use client"
 
 import { useActionState, useEffect, useState } from "react"
-import { BookOpenIcon } from "lucide-react"
+import { BookOpenIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover } from "@/components/book-cover"
 import { BirdDoodle, BookDoodle, EnvelopeDoodle, FlockDoodle, SunDoodle } from "@/components/doodles"
 import { GoalPicker } from "@/components/goal-picker"
@@ -75,7 +75,7 @@ function StepTitle({
     <div className="relative mt-6 mb-8 space-y-3">
       <div className="flex h-20 items-end">{doodle}</div>
       <p className="text-xs font-bold tracking-widest text-primary uppercase">{eyebrow}</p>
-      <h1 className="font-display text-6xl font-bold text-primary">{title}</h1>
+      <h1 className="font-display text-4xl font-bold text-primary">{title}</h1>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>
   )

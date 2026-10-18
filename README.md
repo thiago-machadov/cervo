@@ -28,6 +28,35 @@ E-mails de confirmação ficam no Mailpit: http://127.0.0.1:55424
 2. Rode `npm run db:deploy` para criar as tabelas.
 3. Em Authentication → URL Configuration, configure o Site URL e adicione `https://SEU-DOMINIO/auth/confirm` nas Redirect URLs.
 
+## Deploy no Cloudflare (Workers)
+
+O app roda no Cloudflare via [OpenNext](https://opennext.js.org/cloudflare) (`wrangler.jsonc`, `open-next.config.ts`).
+
+No painel (Workers & Pages → importar o repositório):
+
+| Campo | Valor |
+|---|---|
+| Build command | `npx opennextjs-cloudflare build` |
+| Deploy command | `npx opennextjs-cloudflare deploy` |
+| Preview command | `npx opennextjs-cloudflare upload` |
+
+Variáveis:
+
+- **Build e runtime:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- **Runtime (secret):** `DATABASE_URL` (pooler do Supabase, porta 6543)
+
+Antes do primeiro deploy: `npm run db:deploy` apontando para o banco da nuvem, e no Supabase
+(Authentication → URL Configuration) cadastre o domínio do Worker como Site URL e `https://SEU-DOMINIO/auth/confirm` nas Redirect URLs.
+
+Para testar o Worker localmente: crie um `.dev.vars` com as mesmas variáveis e rode `npm run cf:preview`.
+
+Detalhes que já estão resolvidos no código:
+
+- `cacheComponents` está desligado: no runtime do Workers a renderização com Cache Components trava.
+- O Prisma usa `runtime = "cloudflare"` (funciona no Worker e no `next dev`) e um cliente por request no Worker (`src/lib/db.ts`).
+- O seed usa um segundo cliente gerado para Node (`src/generated/prisma-node`).
+- O `pg-cloudflare` é incluído no build via `outputFileTracingIncludes` (`next.config.ts`).
+
 ### Segurança
 
 O Supabase expõe o schema `public` pela Data API com a chave pública. Todas as tabelas têm **RLS ligado e sem políticas**,

@@ -1,9 +1,9 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { PencilIcon, TargetIcon } from "lucide-react"
-import { BookCover } from "@/components/book-cover"
-import { EyeDoodle, FlameDoodle, StarDoodle } from "@/components/doodles"
+import { PencilSimpleIcon, TargetIcon } from "@phosphor-icons/react/dist/ssr"
+import { BookCover, ClubTile } from "@/components/book-cover"
+import { BooksDoodle, EyeDoodle, FlameDoodle, StarDoodle } from "@/components/doodles"
 import { FeedList } from "@/components/feed-item"
 import { InviteButton } from "@/components/invite-button"
 import { LeaveClubButton } from "@/components/leave-club-button"
@@ -13,6 +13,7 @@ import { UserAvatar } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentUser } from "@/lib/auth"
+import { clubMembersLabel } from "@/lib/clubs"
 import { formatDate } from "@/lib/dates"
 import { expectedPage, getClubDetail } from "@/lib/queries"
 import { cn } from "@/lib/utils"
@@ -31,7 +32,7 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
   const data = await getClubDetail(id, user.id)
   if (!data) notFound()
 
-  const { club, ranking, feed } = data
+  const { club, ranking, feed, freeReading, myWeekPages } = data
   const isOwner = club.ownerId === user.id
   const target = expectedPage(club)
   const me = ranking.find((r) => r.user.id === user.id)
@@ -40,12 +41,12 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
     <main>
       <PageHeader
         title={club.name}
-        subtitle={`${club.members.length} ${club.members.length === 1 ? "membro" : "membros"}`}
+        subtitle={clubMembersLabel(club.members.length, club.maxMembers, club.visibility)}
         backHref="/clubes"
         action={
           isOwner && (
             <Button variant="ghost" size="icon-lg" render={<Link href={`/clubes/${club.id}/editar`} />} nativeButton={false}>
-              <PencilIcon />
+              <PencilSimpleIcon />
               <span className="sr-only">Editar clube</span>
             </Button>
           )
@@ -53,9 +54,21 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
       />
 
       <div className="space-y-4 p-4">
-        {club.description && <p className="text-sm text-muted-foreground">{club.description}</p>}
+        <div className="flex items-center gap-3">
+          <ClubTile name={club.name} className="w-14" />
+          <p className="text-sm text-muted-foreground">{club.description ?? `${club.members.length} ${club.members.length === 1 ? "leitor" : "leitores"} no clube`}</p>
+        </div>
 
-        {club.book ? (
+        {freeReading ? (
+          <div className="flex items-center gap-4 rounded-2xl bg-card p-4 ring-1 ring-border/60">
+            <BooksDoodle className="w-16" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-[0.7rem] font-semibold tracking-widest text-primary uppercase">Leitura livre</p>
+              <p className="text-lg font-bold leading-snug">Cada um lê o seu livro</p>
+              <p className="text-sm text-muted-foreground">O ranking soma as páginas de qualquer livro.</p>
+            </div>
+          </div>
+        ) : club.book ? (
           <div className="flex items-center gap-4 rounded-2xl bg-card p-4 ring-1 ring-border/60">
             <BookCover title={club.book.title} coverUrl={club.book.coverUrl} className="w-16" />
             <div className="min-w-0 flex-1 space-y-1">
@@ -75,7 +88,28 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
           </div>
         )}
 
-        {club.book && (club.goalEndDate || club.weeklyPages) && (
+        {freeReading && club.weeklyPages && (
+          <div className="space-y-3 rounded-2xl bg-secondary p-4 text-secondary-foreground">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <TargetIcon className="size-4" /> Meta do clube
+            </p>
+            <p className="text-sm">{club.weeklyPages} páginas por semana, em qualquer livro</p>
+            <div className="space-y-2">
+              <div className="h-2 overflow-hidden rounded-full bg-card">
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${Math.min(100, (myWeekPages / club.weeklyPages) * 100)}%` }}
+                />
+              </div>
+              <p className="text-xs">
+                Você leu {myWeekPages} páginas nos últimos 7 dias
+                {myWeekPages >= club.weeklyPages ? " — meta batida! ✅" : ` — faltam ${club.weeklyPages - myWeekPages}.`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!freeReading && club.book && (club.goalEndDate || club.weeklyPages) && (
           <div className="space-y-3 rounded-2xl bg-secondary p-4 text-secondary-foreground">
             <p className="flex items-center gap-2 text-sm font-semibold">
               <TargetIcon className="size-4" /> Meta do clube
@@ -91,7 +125,13 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
         )}
 
         <div className="flex gap-2">
-          <InviteButton clubId={club.id} clubName={club.name} />
+          {club.maxMembers !== null && club.members.length >= club.maxMembers ? (
+            <p className="flex h-10 flex-1 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
+              Clube lotado
+            </p>
+          ) : (
+            <InviteButton clubId={club.id} clubName={club.name} />
+          )}
         </div>
       </div>
 
@@ -118,11 +158,13 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {row.days} {row.days === 1 ? "dia" : "dias"} de check-in
-                      {club.book && ` · ${percent}% do livro`}
+                      {freeReading
+                        ? row.currentBook && ` · lendo ${row.currentBook}`
+                        : club.book && ` · ${percent}% do livro`}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-display text-2xl font-bold text-primary tabular-nums">{row.pages}</p>
+                    <p className="font-display text-xl font-bold text-primary tabular-nums">{row.pages}</p>
                     <p className="text-[0.65rem] text-muted-foreground">págs.</p>
                   </div>
                   {row.streak > 0 && (
@@ -136,7 +178,9 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
             })}
           </ol>
           <p className="px-5 py-3 text-xs text-muted-foreground">
-            Páginas lidas no livro do clube e dias com check-in desde que ele foi escolhido.
+            {freeReading
+              ? "Páginas lidas em qualquer livro e dias com check-in desde que o clube entrou na leitura livre."
+              : "Páginas lidas no livro do clube e dias com check-in desde que ele foi escolhido."}
           </p>
         </TabsContent>
 
@@ -144,10 +188,10 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
           {feed.length === 0 ? (
             <div className="flex flex-col items-center gap-3 px-4 py-8 text-center text-sm text-muted-foreground">
               <EyeDoodle className="w-24" />
-              Ninguém fez check-in neste livro ainda. Seja o primeiro!
+              {freeReading ? "Ninguém do clube fez check-in ainda. Seja o primeiro!" : "Ninguém fez check-in neste livro ainda. Seja o primeiro!"}
             </div>
           ) : (
-            <FeedList items={feed} />
+            <FeedList items={feed} viewerId={user.id} />
           )}
         </TabsContent>
       </Tabs>

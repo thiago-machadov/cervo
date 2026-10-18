@@ -7,6 +7,7 @@ import { PageSkeleton } from "@/components/page-skeleton"
 import { Button } from "@/components/ui/button"
 import { joinClub } from "@/app/actions/clubs"
 import { getCurrentUser } from "@/lib/auth"
+import { clubMembersLabel } from "@/lib/clubs"
 import { db } from "@/lib/db"
 import { getInvite } from "@/lib/queries"
 
@@ -55,14 +56,20 @@ async function InviteContent({ params }: Pick<PageProps<"/convite/[code]">, "par
           <BirdDoodle className="w-20" />
           <span className="font-display mt-1 text-base">Convite</span>
         </StampFrame>
-        <h1 className="font-display text-7xl font-bold break-words text-primary">{club.name}</h1>
+        <h1 className="font-display text-5xl font-bold break-words text-primary">{club.name}</h1>
         {club.description && <p className="text-sm text-muted-foreground">{club.description}</p>}
         <p className="text-xs text-muted-foreground">
-          {club._count.members} {club._count.members === 1 ? "membro" : "membros"}
+          {clubMembersLabel(club._count.members, club.maxMembers, club.visibility)}
         </p>
       </div>
 
-      {club.book && (
+      {club.readingMode === "FREE" && (
+        <p className="relative mx-auto rounded-full bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground">
+          Leitura livre: cada um lê o livro que quiser
+        </p>
+      )}
+
+      {club.readingMode === "FIXED" && club.book && (
         <div className="relative mx-auto flex items-center gap-3 rounded-2xl bg-card p-3 pr-5 text-left ring-1 ring-border/60">
           <BookCover title={club.book.title} coverUrl={club.book.coverUrl} className="w-12" />
           <div>
@@ -77,6 +84,10 @@ async function InviteContent({ params }: Pick<PageProps<"/convite/[code]">, "par
         <Button size="lg" className="relative h-12" render={<Link href={`/clubes/${club.id}`} />} nativeButton={false}>
           Você já está no clube — abrir
         </Button>
+      ) : club.maxMembers !== null && club._count.members >= club.maxMembers ? (
+        <p className="relative rounded-2xl bg-card p-4 text-sm text-muted-foreground ring-1 ring-border/60">
+          Esse clube está lotado. Peça para quem te convidou aumentar o limite de membros.
+        </p>
       ) : (
         <form action={joinClub.bind(null, code)} className="relative">
           <Button type="submit" size="lg" className="h-12 w-full text-base">

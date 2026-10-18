@@ -36,6 +36,9 @@ async function EditClubContent({ params }: Pick<PageProps<"/clubes/[id]/editar">
             bookId: club.bookId,
             goalEndDate: club.goalEndDate?.toISOString().slice(0, 10) ?? null,
             weeklyPages: club.weeklyPages,
+            visibility: club.visibility,
+            maxMembers: club.maxMembers,
+            readingMode: club.readingMode,
           }}
         />
       </div>

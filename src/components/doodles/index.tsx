@@ -161,6 +161,22 @@ export function BookDoodle(props: DoodleProps) {
   )
 }
 
+/** Pilha de livros tortos: leitura livre, cada um com o seu. */
+export function BooksDoodle(props: DoodleProps) {
+  return (
+    <Svg viewBox="0 0 100 100" {...props}>
+      <g filter="url(#crayon)">
+        <path d="M14 82C36 80 62 80 86 83L85 94C62 92 36 92 15 94Z" fill="currentColor" strokeWidth="2" />
+        <path d="M20 66C40 63 62 64 82 68L80 80C60 77 40 77 21 79Z" strokeWidth="3.8" />
+        <path d="M24 70C40 68 58 68 76 72" strokeWidth="2" opacity="0.7" />
+        <path d="M26 50C44 46 62 47 78 52L74 64C58 60 42 60 27 63Z" fill="currentColor" strokeWidth="2" />
+        <path d="M34 22L46 20L52 46L40 49Z" strokeWidth="3.6" />
+        <path d="M52 18L62 20L58 46L49 45Z" fill="currentColor" strokeWidth="2" />
+      </g>
+    </Svg>
+  )
+}
+
 /** Chama da sequência: forma cheia com miolo vazado. */
 export function FlameDoodle(props: DoodleProps) {
   return (
@@ -246,15 +262,5 @@ export function DeerDoodle(props: DoodleProps) {
         />
       </g>
     </Svg>
-  )
-}
-
-/** Logo: cervo + nome. */
-export function CervoLogo({ className, size = "md" }: { className?: string; size?: "sm" | "md" }) {
-  return (
-    <span className={cn("inline-flex items-center gap-2 text-primary", className)}>
-      <DeerDoodle className={size === "sm" ? "w-7" : "w-10"} label="Cervo" />
-      <span className={cn("font-display font-bold", size === "sm" ? "text-2xl" : "text-3xl")}>Cervo</span>
-    </span>
   )
 }

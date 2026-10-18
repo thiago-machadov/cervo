@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-import { LogOutIcon } from "lucide-react"
+import { SignOutIcon } from "@phosphor-icons/react/dist/ssr"
 import { SpiralDoodle, ThreadDoodle } from "@/components/doodles"
 import { EditGoalDrawer } from "@/components/edit-goal-drawer"
 import { PageHeader } from "@/components/page-header"
@@ -53,7 +53,7 @@ async function ProfileContent() {
           {items.map((item) => (
             <div key={item.label} className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
               <dt className="text-xs text-muted-foreground">{item.label}</dt>
-              <dd className="font-display text-4xl font-bold text-primary tabular-nums">{item.value}</dd>
+              <dd className="font-display text-3xl font-bold text-primary tabular-nums">{item.value}</dd>
             </div>
           ))}
         </dl>
@@ -62,7 +62,7 @@ async function ProfileContent() {
 
         <form action={signOut}>
           <Button type="submit" variant="outline" className="h-11 w-full">
-            <LogOutIcon /> Sair
+            <SignOutIcon /> Sair
           </Button>
         </form>
       </div>
