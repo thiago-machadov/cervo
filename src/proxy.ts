@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
 import { redirectWithCookies, updateSession } from "@/lib/supabase/proxy"
 
-const PUBLIC_PATHS = ["/boas-vindas", "/entrar", "/cadastro", "/auth/"]
+const PUBLIC_PATHS = ["/boas-vindas", "/entrar", "/cadastro", "/esqueci-senha", "/auth/"]
 
 /** Renova a sessão do Supabase e faz a checagem otimista de login. A validação real acontece no servidor. */
 export async function proxy(request: NextRequest) {

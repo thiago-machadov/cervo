@@ -10,7 +10,13 @@
 	},
 	"observability": {
 		"enabled": true
-	}
+	},
+	// Domínios próprios: a Cloudflare cria o DNS e o certificado HTTPS no deploy
+	// (exige o domínio ativo na conta, com os nameservers apontando para a Cloudflare).
+	"routes": [
+		{ "pattern": "cervobook.club", "custom_domain": true },
+		{ "pattern": "www.cervobook.club", "custom_domain": true }
+	]
 	// Sem cache incremental (R2): todas as páginas dependem da sessão e são renderizadas por request.
 	// Variáveis: NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (build e runtime)
 	// e DATABASE_URL como secret, configuradas no painel da Cloudflare.

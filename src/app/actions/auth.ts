@@ -22,6 +22,8 @@ function authErrorMessage(code: string | undefined, fallback: string) {
     case "user_already_exists":
     case "email_exists":
       return "Já existe uma conta com esse e-mail"
+    case "same_password":
+      return "A nova senha precisa ser diferente da atual"
     case "weak_password":
       return "Senha fraca. Use pelo menos 8 caracteres, misturando letras e números."
     case "over_email_send_rate_limit":
@@ -112,6 +114,45 @@ export async function resendConfirmation(_prev: AuthState, formData: FormData): 
   })
   if (error) return { confirmEmail: email, error: authErrorMessage(error.code, "Não foi possível reenviar agora.") }
   return { confirmEmail: email, resent: true }
+}
+
+export type ResetState = { error?: string; sent?: boolean; email?: string } | undefined
+
+/**
+ * Envia o e-mail de redefinição de senha. A resposta é sempre a mesma, exista ou não
+ * conta com esse e-mail, para não revelar quem está cadastrado.
+ */
+export async function requestPasswordReset(_prev: ResetState, formData: FormData): Promise<ResetState> {
+  const parsed = z.email("E-mail inválido").trim().toLowerCase().safeParse(formData.get("email"))
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message }
+
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
+    redirectTo: `${await siteOrigin()}/auth/confirm?next=${encodeURIComponent("/nova-senha")}`,
+  })
+  if (error?.code === "over_email_send_rate_limit" || error?.code === "over_request_rate_limit") {
+    return { error: authErrorMessage(error.code, ""), email: parsed.data }
+  }
+  return { sent: true, email: parsed.data }
+}
+
+const newPasswordSchema = z
+  .object({
+    password: z.string().min(8, "A senha precisa de pelo menos 8 caracteres").max(72),
+    confirm: z.string(),
+  })
+  .refine((v) => v.password === v.confirm, { message: "As senhas não são iguais", path: ["confirm"] })
+
+/** Define a nova senha. Só funciona com a sessão criada pelo link do e-mail (ou já logado). */
+export async function updatePassword(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const parsed = newPasswordSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message }
+
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password })
+  if (error) return { error: authErrorMessage(error.code, "Não foi possível trocar a senha. Peça um novo link.") }
+
+  redirect("/?senha=nova")
 }
 
 export async function signOut() {

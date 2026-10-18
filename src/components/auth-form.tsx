@@ -40,7 +40,14 @@ export function AuthForm({ mode, next, initialError }: { mode: "signin" | "signu
           />
         </Field>
         <Field>
-          <FieldLabel htmlFor="password">Senha</FieldLabel>
+          <div className="flex items-center justify-between">
+            <FieldLabel htmlFor="password">Senha</FieldLabel>
+            {mode === "signin" && (
+              <Link href="/esqueci-senha" className="text-xs font-semibold text-primary">
+                Esqueci minha senha
+              </Link>
+            )}
+          </div>
           <Input
             id="password"
             name="password"
