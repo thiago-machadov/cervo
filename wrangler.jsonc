@@ -11,6 +11,16 @@
 	"observability": {
 		"enabled": true
 	},
+	// Proteção de custo: corta qualquer request que passe de 200 ms de CPU (o padrão é 30 s).
+	// Requer o plano Workers Paid. Ajustar depois de ver o p99 de CPU em Metrics.
+	"limits": {
+		"cpu_ms": 200
+	},
+	// Roda o Worker perto do banco (Supabase em us-east-1) em vez de perto do usuário:
+	// as várias consultas de cada página ficam bem mais rápidas.
+	"placement": {
+		"mode": "smart"
+	},
 	// Fotos das capas dos livros (no `next dev` usa um R2 simulado em .wrangler/state).
 	"r2_buckets": [
 		{ "binding": "COVERS", "bucket_name": "cervo-capas" }
