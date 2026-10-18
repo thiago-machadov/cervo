@@ -25,7 +25,7 @@ async function CheckInContent({ params }: Pick<PageProps<"/checkin/[id]">, "para
   if (!checkIn) notFound()
 
   return (
-    <main>
+    <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Check-in" backHref="/feed" />
       <div className="px-4 pt-2">
         <FeedItem checkIn={checkIn} viewerId={user.id} linkToDetail={false} />

@@ -62,11 +62,11 @@ async function LibraryContent() {
                     Nenhum livro aqui ainda.
                   </div>
                 ) : (
-                  <ul className="mx-4 divide-y divide-border/70 overflow-hidden rounded-2xl bg-card ring-1 ring-border/60">
+                  <ul className="mx-4 divide-y divide-border/70 overflow-hidden rounded-2xl bg-card ring-1 ring-border/60 md:grid md:grid-cols-2 md:gap-3 md:divide-y-0 md:overflow-visible md:bg-transparent md:ring-0">
                     {group.map((item) => {
                       const percent = Math.round((item.currentPage / item.book.totalPages) * 100)
                       return (
-                        <li key={item.id}>
+                        <li key={item.id} className="md:overflow-hidden md:rounded-2xl md:bg-card md:ring-1 md:ring-border/60">
                           <Link href={`/biblioteca/${item.id}`} className="flex items-center gap-4 p-3 transition-colors active:bg-muted/60">
                             <BookCover title={item.book.title} coverUrl={item.book.coverUrl} className="w-16" />
                             <div className="min-w-0 flex-1 space-y-1">

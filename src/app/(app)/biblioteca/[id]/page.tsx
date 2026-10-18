@@ -32,7 +32,7 @@ async function LibraryItemContent({ params }: Pick<PageProps<"/biblioteca/[id]">
   const canCheckIn = item.status !== "DONE"
 
   return (
-    <main>
+    <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title={book.title} backHref="/biblioteca" />
       <div className="space-y-6 p-4">
         <div className="flex flex-col items-center gap-4 pt-2 text-center">

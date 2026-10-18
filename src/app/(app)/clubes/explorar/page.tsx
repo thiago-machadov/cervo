@@ -112,7 +112,7 @@ async function ExploreContent({ searchParams }: Pick<PageProps<"/clubes/explorar
           }
         />
       ) : (
-        <ul className="space-y-3 px-4 pb-4">
+        <ul className="grid gap-3 px-4 pb-4 md:grid-cols-2">
           {clubs.map((club) => (
             <li key={club.id} className="flex items-center gap-4 rounded-2xl bg-card p-3 ring-1 ring-border/60">
               <ClubTile name={club.name} className="w-14" />

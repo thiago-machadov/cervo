@@ -72,7 +72,7 @@ export function FeedItem({
 
 export function FeedList({ items, viewerId }: { items: FeedCheckIn[]; viewerId: string }) {
   return (
-    <div className="space-y-3 px-4">
+    <div className="mx-auto max-w-2xl space-y-3 px-4">
       {items.map((checkIn) => (
         <FeedItem key={checkIn.id} checkIn={checkIn} viewerId={viewerId} />
       ))}

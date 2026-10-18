@@ -4,6 +4,7 @@ import Link from "next/link"
 import { CaretRightIcon, DeviceMobileIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr"
 import { SpiralDoodle, ThreadDoodle } from "@/components/doodles"
 import { EditGoalDrawer } from "@/components/edit-goal-drawer"
+import { ThemeSelector } from "@/components/theme-selector"
 import { PageHeader } from "@/components/page-header"
 import { PageSkeleton } from "@/components/page-skeleton"
 import { UserAvatar } from "@/components/user-avatar"
@@ -36,7 +37,7 @@ async function ProfileContent() {
   ]
 
   return (
-    <main>
+    <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Perfil" />
       <div className="space-y-6 px-4">
         <div className="relative flex items-center gap-4 overflow-hidden rounded-2xl bg-card p-4 ring-1 ring-border/60">
@@ -50,7 +51,9 @@ async function ProfileContent() {
 
         <EditGoalDrawer goalType={user.goalType} dailyGoal={user.dailyGoal} />
 
-        <dl className="grid grid-cols-2 gap-3">
+        <ThemeSelector />
+
+        <dl className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {items.map((item) => (
             <div key={item.label} className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
               <dt className="text-xs text-muted-foreground">{item.label}</dt>

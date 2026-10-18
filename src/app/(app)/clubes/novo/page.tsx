@@ -21,7 +21,7 @@ async function NewClubContent() {
   const library = await getLibrary(user.id)
 
   return (
-    <main>
+    <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Novo clube" backHref="/clubes" />
       <div className="p-4">
         <ClubForm books={library.map((item) => ({ id: item.book.id, title: item.book.title }))} />

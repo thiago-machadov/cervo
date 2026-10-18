@@ -38,7 +38,7 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
   const me = ranking.find((r) => r.user.id === user.id)
 
   return (
-    <main>
+    <main className="md:mx-auto md:max-w-2xl">
       <PageHeader
         title={club.name}
         subtitle={clubMembersLabel(club.members.length, club.maxMembers, club.visibility)}

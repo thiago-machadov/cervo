@@ -42,8 +42,9 @@ async function TodayContent() {
 
   return (
     <main className="space-y-6 pb-4">
-      <header className="space-y-5 px-5 pt-[calc(env(safe-area-inset-top)+1rem)]">
-        <div className="flex items-center justify-between">
+      <header className="space-y-5 px-5 pt-[calc(env(safe-area-inset-top)+1rem)] md:px-4 md:pt-8">
+        {/* No desktop o logo já está no menu lateral. */}
+        <div className="flex items-center justify-between lg:hidden">
           <DeerDoodle className="w-10" label="Cervo" />
           <Link href="/perfil" aria-label="Perfil">
             <UserAvatar name={user.name} className="size-10 ring-2 ring-card" />
@@ -60,44 +61,52 @@ async function TodayContent() {
         </div>
       </header>
 
-      <div className="px-4">
-        <StreakCard {...stats}>
-          <CheckInDrawer
-            options={options}
-            goalType={user.goalType}
-            trigger={
-              <Button size="lg" className="relative h-12 w-full bg-primary-foreground text-base font-semibold text-primary hover:bg-primary-foreground/90">
-                <BookOpenTextIcon className="size-5" /> Fazer check-in
-              </Button>
-            }
-          />
-        </StreakCard>
+      <div className="space-y-6 md:grid md:grid-cols-2 md:items-start md:gap-6 md:space-y-0">
+        <div className="space-y-6">
+          <div className="px-4">
+            <StreakCard {...stats}>
+              <CheckInDrawer
+                options={options}
+                goalType={user.goalType}
+                trigger={
+                  <Button
+                    size="lg"
+                    className="relative h-12 w-full bg-primary-foreground text-base font-semibold text-primary hover:bg-primary-foreground/90"
+                  >
+                    <BookOpenTextIcon className="size-5" /> Fazer check-in
+                  </Button>
+                }
+              />
+            </StreakCard>
+          </div>
+
+          <div className="px-4">
+            <GoalCard
+              goalType={user.goalType}
+              dailyGoal={user.dailyGoal}
+              pagesToday={stats.pagesToday}
+              minutesToday={stats.minutesToday}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <InstallBanner />
+
+          {reading.length > 0 && (
+            <section>
+              <SectionHeader title="Continue lendo" href="/biblioteca" />
+              <ContinueReading items={reading} />
+            </section>
+          )}
+
+          <section className="grid grid-cols-3 gap-3 px-4 text-center">
+            <Stat label="Págs. na semana" value={stats.pagesThisWeek} />
+            <Stat label="Dias lendo" value={stats.daysRead} />
+            <Stat label="Livros lidos" value={stats.booksDone} />
+          </section>
+        </div>
       </div>
-
-      <div className="px-4">
-        <GoalCard
-          goalType={user.goalType}
-          dailyGoal={user.dailyGoal}
-          pagesToday={stats.pagesToday}
-          minutesToday={stats.minutesToday}
-        />
-      </div>
-
-      <InstallBanner />
-
-      {reading.length > 0 && (
-        <section>
-          <SectionHeader title="Continue lendo" href="/biblioteca" />
-          <ContinueReading items={reading} />
-        </section>
-      )}
-
-      <section className="grid grid-cols-3 gap-3 px-4 text-center">
-        <Stat label="Págs. na semana" value={stats.pagesThisWeek} />
-        <Stat label="Dias lendo" value={stats.daysRead} />
-        <Stat label="Livros lidos" value={stats.booksDone} />
-      </section>
-
     </main>
   )
 }

@@ -24,7 +24,7 @@ async function EditClubContent({ params }: Pick<PageProps<"/clubes/[id]/editar">
   const library = await getLibrary(user.id)
 
   return (
-    <main>
+    <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Editar clube" backHref={`/clubes/${club.id}`} />
       <div className="p-4">
         <ClubForm
