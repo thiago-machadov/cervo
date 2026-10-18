@@ -55,6 +55,10 @@ model User {
   dailyGoal   Int?
   /// Preenchido quando o usuário conclui o onboarding
   onboardedAt DateTime?
+  /// Pro de cortesia até esta data (fundadores), independente do Stripe
+  proUntil    DateTime?
+  /// Cor do app escolhida (recurso Pro); null = cobalto
+  accent      String?
   createdAt   DateTime  @default(now())
 
   books       Book[]
@@ -69,6 +73,8 @@ model User {
   /// Pedidos de amizade que o usuário enviou / recebeu (amizade = pedido aceito)
   friendRequestsSent     Friendship[] @relation("FriendRequester")
   friendRequestsReceived Friendship[] @relation("FriendAddressee")
+  subscription           Subscription?
+  challengesCreated      ClubChallenge[]
 }
 
 /// Livro cadastrado manualmente por um usuário.
@@ -127,8 +133,9 @@ model Club {
 
   owner   User         @relation("ClubOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   book    Book?        @relation(fields: [bookId], references: [id], onDelete: SetNull)
-  members ClubMember[]
-  invites Invite[]
+  members    ClubMember[]
+  invites    Invite[]
+  challenges ClubChallenge[]
 }
 
 model ClubMember {
@@ -252,4 +259,38 @@ model Friendship {
 
   @@unique([requesterId, addresseeId])
   @@index([addresseeId, status])
+}
+
+/// Assinatura do Cervo Pro no Stripe (espelho do que o Stripe informa via webhook).
+model Subscription {
+  userId               String    @id
+  stripeCustomerId     String    @unique
+  stripeSubscriptionId String?   @unique
+  /// Status do Stripe: active, trialing, past_due, canceled, incomplete, unpaid...
+  status               String
+  /// month ou year
+  interval             String?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Desafio de um clube (recurso Pro do dono): ler em X dias dentro de um período.
+model ClubChallenge {
+  id          String   @id @default(cuid())
+  clubId      String
+  title       String
+  targetDays  Int
+  /// Datas no formato AAAA-MM-DD (mesmo de CheckIn.day)
+  startsOn    String
+  endsOn      String
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  club      Club  @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([clubId, endsOn])
 }

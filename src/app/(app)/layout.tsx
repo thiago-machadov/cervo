@@ -1,5 +1,10 @@
 import { Suspense } from "react"
+import { AccentSync } from "@/components/accent-sync"
 import { BottomNav, BottomNavItems } from "@/components/bottom-nav"
+import { isAccent } from "@/lib/accents"
+import { getSessionUserId } from "@/lib/session"
+import { db } from "@/lib/db"
+import { isPro } from "@/lib/plan"
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
@@ -11,6 +16,18 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       <Suspense fallback={<BottomNavItems />}>
         <BottomNav />
       </Suspense>
+      <Suspense>
+        <UserAccent />
+      </Suspense>
     </div>
   )
+}
+
+/** Cor do app da conta (só vale enquanto for Pro). */
+async function UserAccent() {
+  const userId = await getSessionUserId()
+  if (!userId) return null
+  const user = await db.user.findUnique({ where: { id: userId }, select: { accent: true } })
+  const accent = user?.accent && isAccent(user.accent) && (await isPro(userId)) ? user.accent : null
+  return <AccentSync accent={accent} />
 }

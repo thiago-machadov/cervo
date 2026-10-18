@@ -20,5 +20,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // /capas fica de fora: imagens públicas, sem necessidade de checar a sessão (economiza CPU no Worker).
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icon|apple-icon|capas/|.*\\.(?:png|svg|ico|webp)$).*)"],
+  // /api/stripe também: o webhook vem do Stripe, sem cookies de login.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icon|apple-icon|capas/|api/stripe/|.*\\.(?:png|svg|ico|webp)$).*)"],
 }

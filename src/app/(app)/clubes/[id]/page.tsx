@@ -1,9 +1,11 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { PencilSimpleIcon, TargetIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr"
+import { DownloadSimpleIcon, LockSimpleIcon, PencilSimpleIcon, TargetIcon, TrophyIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover, ClubTile } from "@/components/book-cover"
 import { BooksDoodle, EyeDoodle, FlameDoodle, StarDoodle } from "@/components/doodles"
+import { CreateChallengeButton } from "@/components/challenge-form"
+import { ClubChallenges } from "@/components/club-challenges"
 import { FeedList } from "@/components/feed-item"
 import { InviteButton } from "@/components/invite-button"
 import { LeaveClubButton } from "@/components/leave-club-button"
@@ -14,7 +16,9 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentUser } from "@/lib/auth"
 import { canManageClub, clubMembersLabel, findClubHeir } from "@/lib/clubs"
-import { formatDate } from "@/lib/dates"
+import { getClubChallenges } from "@/lib/challenges"
+import { dayKey, formatDate } from "@/lib/dates"
+import { isPro } from "@/lib/plan"
 import { expectedPage, getClubDetail } from "@/lib/queries"
 import { cn } from "@/lib/utils"
 
@@ -36,7 +40,14 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
   const myRole = club.members.find((m) => m.userId === user.id)?.role ?? null
   const isOwner = myRole === "OWNER"
   const canManage = canManageClub(myRole)
-  const heir = isOwner ? await findClubHeir(club.id, user.id) : null
+  const [heir, ownerIsPro, challenges] = await Promise.all([
+    isOwner ? findClubHeir(club.id, user.id) : null,
+    isPro(club.ownerId),
+    getClubChallenges(
+      club.id,
+      club.members.map((m) => ({ userId: m.userId, name: m.user.name }))
+    ),
+  ])
   const target = expectedPage(club)
   const me = ranking.find((r) => r.user.id === user.id)
 
@@ -127,6 +138,31 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
           </div>
         )}
 
+        {(challenges.length > 0 || canManage) && (
+          <section className="space-y-2">
+            <h2 className="flex items-center gap-2 text-base font-bold">
+              <TrophyIcon className="size-5 text-primary" weight="fill" /> Desafios
+            </h2>
+            {challenges.length > 0 && <ClubChallenges challenges={challenges} viewerId={user.id} canManage={canManage} />}
+            {canManage &&
+              (ownerIsPro ? (
+                <CreateChallengeButton clubId={club.id} today={dayKey()} />
+              ) : (
+                <Link
+                  href="/assinatura"
+                  className="flex items-center gap-3 rounded-2xl border border-dashed border-primary/30 p-4 text-sm text-muted-foreground"
+                >
+                  <LockSimpleIcon className="size-5 shrink-0 text-primary" weight="fill" />
+                  <span>
+                    {isOwner
+                      ? "Crie desafios para o clube (ex.: ler 25 dias em 30) com o Cervo Pro."
+                      : "Desafios ficam disponíveis quando o dono do clube for Pro."}
+                  </span>
+                </Link>
+              ))}
+          </section>
+        )}
+
         <div className="flex gap-2">
           {club.maxMembers !== null && club.members.length >= club.maxMembers ? (
             <p className="flex h-10 flex-1 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
@@ -190,6 +226,14 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
               ? "Páginas lidas em qualquer livro e dias com check-in desde que o clube entrou na leitura livre."
               : "Páginas lidas no livro do clube e dias com check-in desde que ele foi escolhido."}
           </p>
+          {canManage && ownerIsPro && (
+            <div className="px-4">
+              {/* Download de arquivo: <a> normal, não <Link>. */}
+              <Button variant="outline" className="h-10 w-full" render={<a href={`/clubes/${club.id}/ranking`} download />} nativeButton={false}>
+                <DownloadSimpleIcon /> Exportar ranking (CSV)
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="feed">

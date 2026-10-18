@@ -11,6 +11,7 @@ const userSelect = {
   goalType: true,
   dailyGoal: true,
   onboardedAt: true,
+  accent: true,
 } as const
 
 /** Cria (na primeira vez) o perfil do app para um usuário do Supabase Auth. */

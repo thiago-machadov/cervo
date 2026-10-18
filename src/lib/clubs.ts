@@ -1,5 +1,6 @@
 import "server-only"
 import { db } from "@/lib/db"
+import { FREE_CLUB_LIMIT, remainingClubSlots } from "@/lib/plan"
 
 /** Garante que o livro do clube esteja na biblioteca do usuário como "Lendo". */
 export async function ensureReading(userId: string, bookId: string) {
@@ -21,7 +22,7 @@ export function parseInviteCode(input: string) {
   return match ? match[1] : trimmed
 }
 
-export type JoinResult = { clubId: string } | { error: "invalid" | "full" | "private" }
+export type JoinResult = { clubId: string } | { error: "invalid" | "full" | "private" | "limit" }
 
 /**
  * Coloca o usuário no clube respeitando o limite de membros.
@@ -37,6 +38,7 @@ export async function addMember(userId: string, clubId: string): Promise<JoinRes
   const existing = await db.clubMember.findUnique({ where: { clubId_userId: { clubId, userId } } })
   if (existing) return { clubId }
   if (club.maxMembers !== null && club._count.members >= club.maxMembers) return { error: "full" }
+  if ((await remainingClubSlots(userId)) === 0) return { error: "limit" }
 
   await db.clubMember.create({ data: { clubId, userId } })
   if (club.bookId) await ensureReading(userId, club.bookId)
@@ -64,8 +66,11 @@ export function clubMembersLabel(count: number, maxMembers: number | null, visib
   return visibility ? `${members} · ${visibility === "PUBLIC" ? "Público" : "Privado"}` : members
 }
 
-export function joinErrorMessage(error: "invalid" | "full" | "private") {
+export const CLUB_LIMIT_MESSAGE = `No plano grátis você participa de até ${FREE_CLUB_LIMIT} clubes. Saia de um ou assine o Cervo Pro para ter clubes ilimitados.`
+
+export function joinErrorMessage(error: "invalid" | "full" | "private" | "limit") {
   if (error === "full") return "Esse clube está lotado"
+  if (error === "limit") return CLUB_LIMIT_MESSAGE
   if (error === "private") return "Esse clube é privado: entre por um link de convite"
   return "Convite inválido ou expirado"
 }

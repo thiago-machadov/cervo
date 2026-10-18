@@ -2,6 +2,7 @@ import "server-only"
 import { ownerLeaveClub } from "@/lib/clubs"
 import { deleteAllCheckInPhotos, deleteImages } from "@/lib/covers"
 import { db } from "@/lib/db"
+import { isStripeConfigured, stripe } from "@/lib/stripe"
 
 /** Todos os dados do usuário em JSON (direito de acesso e portabilidade da LGPD). */
 export async function exportUserData(userId: string) {
@@ -9,7 +10,7 @@ export async function exportUserData(userId: string) {
     where: { id: userId },
     select: { id: true, name: true, email: true, goalType: true, dailyGoal: true, onboardedAt: true, createdAt: true },
   })
-  const [library, checkIns, comments, reactions, memberships, friendships, feedbacks] = await Promise.all([
+  const [library, checkIns, comments, reactions, memberships, friendships, feedbacks, subscription] = await Promise.all([
     db.libraryItem.findMany({
       where: { userId },
       select: {
@@ -50,6 +51,10 @@ export async function exportUserData(userId: string) {
       },
     }),
     db.feedback.findMany({ where: { userId }, select: { kind: true, message: true, createdAt: true } }),
+    db.subscription.findUnique({
+      where: { userId },
+      select: { status: true, interval: true, currentPeriodEnd: true, cancelAtPeriodEnd: true },
+    }),
   ])
 
   return {
@@ -63,6 +68,7 @@ export async function exportUserData(userId: string) {
     clubes: memberships,
     amizades: friendships,
     feedbacks,
+    assinatura: subscription,
   }
 }
 
@@ -72,9 +78,20 @@ export async function exportUserData(userId: string) {
  * - livros que só ela usava são apagados; os que estão na biblioteca de outros ficam, sem autor;
  * - fotos de check-in e capas dos livros apagados saem do R2;
  * - perfil, biblioteca, check-ins, comentários, reações, amizades e feedbacks saem do banco;
- * - o login (auth.users do Supabase) é apagado na mesma transação.
+ * - o login (auth.users do Supabase) é apagado na mesma transação;
+ * - no Stripe, o cliente é apagado (isso cancela a assinatura na hora e remove o cartão salvo).
  */
 export async function deleteAccount(userId: string) {
+  const subscription = await db.subscription.findUnique({ where: { userId }, select: { stripeCustomerId: true } })
+  if (subscription && isStripeConfigured()) {
+    try {
+      await stripe().customers.del(subscription.stripeCustomerId)
+    } catch (error) {
+      // Cliente já apagado no Stripe: segue com a exclusão. Qualquer outro erro interrompe (para não deixar cobrança ativa).
+      if (!(error instanceof Error && "code" in error && error.code === "resource_missing")) throw error
+    }
+  }
+
   const ownedClubs = await db.club.findMany({ where: { ownerId: userId }, select: { id: true } })
   for (const club of ownedClubs) await ownerLeaveClub(club.id, userId)
 

@@ -2,7 +2,7 @@
 export const LEGAL = {
   appName: "Cervo",
   site: "cervobook.club",
-  contactEmail: "privacidade@cervobook.club",
+  contactEmail: "cervobookclub@gmail.com",
   lastUpdated: "18 de outubro de 2026",
   minimumAge: 13,
 }

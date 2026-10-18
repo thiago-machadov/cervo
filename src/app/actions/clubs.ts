@@ -7,6 +7,7 @@ import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
 import {
   acceptInvite,
+  CLUB_LIMIT_MESSAGE,
   ensureReading,
   getClubRole,
   joinPublicClub as joinPublic,
@@ -14,6 +15,9 @@ import {
   transferClub,
 } from "@/lib/clubs"
 import { db } from "@/lib/db"
+import { periodLength } from "@/lib/challenges"
+import { dayKey } from "@/lib/dates"
+import { isPro, remainingClubSlots } from "@/lib/plan"
 import type { ActionState } from "@/lib/utils-text"
 
 const optionalInt = z.preprocess(
@@ -53,6 +57,7 @@ function goalDate(value?: string) {
 
 export async function createClub(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const userId = await requireUserId()
+  if ((await remainingClubSlots(userId)) === 0) return { error: CLUB_LIMIT_MESSAGE }
   const parsed = clubSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0]?.message }
 
@@ -154,10 +159,13 @@ export async function joinClub(code: string) {
 }
 
 /** Entrar num clube público a partir da busca. */
-export async function joinPublicClub(clubId: string): Promise<{ error?: string } | void> {
+export async function joinPublicClub(clubId: string): Promise<{ error?: string; limit?: boolean } | void> {
   const userId = await requireUserId()
   const result = await joinPublic(userId, clubId)
-  if ("error" in result) return { error: result.error === "full" ? "Esse clube lotou" : "Não foi possível entrar nesse clube" }
+  if ("error" in result) {
+    if (result.error === "limit") return { error: CLUB_LIMIT_MESSAGE, limit: true }
+    return { error: result.error === "full" ? "Esse clube lotou" : "Não foi possível entrar nesse clube" }
+  }
   redirect(`/clubes/${result.clubId}`)
 }
 
@@ -223,4 +231,52 @@ export async function transferOwnership(clubId: string, memberId: string): Promi
   await transferClub(clubId, userId, memberId)
   refresh()
   return { ok: true, message: "O clube tem um novo dono" }
+}
+
+const challengeSchema = z.object({
+  clubId: z.string().min(1),
+  title: z.string().trim().min(3, "Dê um nome ao desafio").max(60),
+  targetDays: z.coerce.number().int().min(1, "Meta de dias inválida").max(366),
+  startsOn: z.iso.date("Data de início inválida"),
+  endsOn: z.iso.date("Data de fim inválida"),
+})
+
+/** Só dono/admins criam desafios, e só se o dono do clube for Pro. */
+async function canRunChallenges(clubId: string, userId: string) {
+  const [role, club] = await Promise.all([
+    getClubRole(clubId, userId),
+    db.club.findUnique({ where: { id: clubId }, select: { ownerId: true } }),
+  ])
+  if (!club || (role !== "OWNER" && role !== "ADMIN")) return "Só o dono e os admins criam desafios"
+  if (!(await isPro(club.ownerId))) return "Desafios são um recurso do Cervo Pro do dono do clube"
+  return null
+}
+
+export async function createChallenge(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const userId = await requireUserId()
+  const parsed = challengeSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message }
+  const { clubId, title, targetDays, startsOn, endsOn } = parsed.data
+
+  const denied = await canRunChallenges(clubId, userId)
+  if (denied) return { error: denied }
+  if (endsOn < startsOn) return { error: "O fim precisa ser depois do início" }
+  const length = periodLength(startsOn, endsOn)
+  if (length > 366) return { error: "O desafio pode durar no máximo um ano" }
+  if (targetDays > length) return { error: `O período tem ${length} dias; a meta não pode passar disso` }
+  if (endsOn < dayKey()) return { error: "Esse período já terminou" }
+
+  await db.clubChallenge.create({ data: { clubId, title, targetDays, startsOn, endsOn, createdById: userId } })
+  refresh()
+  return { ok: true }
+}
+
+export async function deleteChallenge(challengeId: string): Promise<{ error?: string } | void> {
+  const userId = await requireUserId()
+  const challenge = await db.clubChallenge.findUnique({ where: { id: challengeId }, select: { clubId: true } })
+  if (!challenge) return
+  const role = await getClubRole(challenge.clubId, userId)
+  if (role !== "OWNER" && role !== "ADMIN") return { error: "Só o dono e os admins apagam desafios" }
+  await db.clubChallenge.delete({ where: { id: challengeId } })
+  refresh()
 }

@@ -17,7 +17,7 @@ const items = [
 /** Telas internas que pertencem a uma aba (ex.: /amigos fica sob Feed, /feedback sob Perfil). */
 const SECTION_PATHS: Record<string, string[]> = {
   "/feed": ["/amigos", "/pessoas", "/checkin"],
-  "/perfil": ["/feedback", "/instalar", "/conta"],
+  "/perfil": ["/feedback", "/instalar", "/conta", "/assinatura", "/estatisticas"],
 }
 
 function isActive(pathname: string | undefined, href: string) {

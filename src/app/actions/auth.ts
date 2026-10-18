@@ -1,7 +1,9 @@
 "use server"
 
-import { headers } from "next/headers"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { ACCENT_COOKIE } from "@/lib/accents"
+import { siteOrigin } from "@/lib/site"
 import { z } from "zod"
 import { ensureProfile } from "@/lib/auth"
 import { safeNext, withNext } from "@/lib/redirects"
@@ -34,14 +36,6 @@ function authErrorMessage(code: string | undefined, fallback: string) {
   }
 }
 
-async function siteOrigin() {
-  const h = await headers()
-  const origin = h.get("origin")
-  if (origin) return origin
-  const host = h.get("x-forwarded-host") ?? h.get("host")
-  const proto = h.get("x-forwarded-proto") ?? "http"
-  return `${proto}://${host}`
-}
 
 const signUpSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome").max(60),
@@ -158,5 +152,7 @@ export async function updatePassword(_prev: AuthState, formData: FormData): Prom
 export async function signOut() {
   const supabase = await createSupabaseServerClient()
   await supabase.auth.signOut()
+  // A cor do app é da conta: ao sair, volta ao cobalto.
+  ;(await cookies()).delete(ACCENT_COOKIE)
   redirect("/boas-vindas")
 }

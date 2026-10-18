@@ -1,22 +1,28 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import Link from "next/link"
-import { CaretRightIcon, ChatCircleDotsIcon, DeviceMobileIcon, ShieldCheckIcon, SignOutIcon, UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
+import { CaretRightIcon, ChartLineUpIcon, ChatCircleDotsIcon, DeviceMobileIcon, ShieldCheckIcon, SignOutIcon, SparkleIcon, UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
 import type { Icon } from "@phosphor-icons/react/lib"
 import { SpiralDoodle, ThreadDoodle } from "@/components/doodles"
+import { AccentPicker } from "@/components/accent-picker"
 import { EditGoalDrawer } from "@/components/edit-goal-drawer"
 import { SubmitButton } from "@/components/submit-button"
 import { ThemeSelector } from "@/components/theme-selector"
 import { PageHeader } from "@/components/page-header"
 import { PageSkeleton } from "@/components/page-skeleton"
+import { ProBadge } from "@/components/pro-badge"
 import { UserAvatar } from "@/components/user-avatar"
 import { signOut } from "@/app/actions/auth"
 import { getCurrentUser } from "@/lib/auth"
+import { isAccent } from "@/lib/accents"
+import { formatDate } from "@/lib/dates"
+import { getPlan } from "@/lib/plan"
 import { getUserStats } from "@/lib/queries"
 
 export const metadata: Metadata = { title: "Perfil" }
 
 const LINKS: { href: string; icon: Icon; title: string; description: string }[] = [
+  { href: "/estatisticas", icon: ChartLineUpIcon, title: "Estatísticas", description: "Seu ritmo e a retrospectiva do ano" },
   { href: "/amigos", icon: UsersThreeIcon, title: "Amigos", description: "Pedidos de amizade e seu link para convidar" },
   { href: "/feedback", icon: ChatCircleDotsIcon, title: "Mandar feedback", description: "Bugs, ideias e elogios sobre o app" },
   { href: "/instalar", icon: DeviceMobileIcon, title: "Instalar o app", description: "Passo a passo para iPhone e Android" },
@@ -33,7 +39,15 @@ export default function ProfilePage() {
 
 async function ProfileContent() {
   const user = await getCurrentUser()
-  const stats = await getUserStats(user.id)
+  const [stats, plan] = await Promise.all([getUserStats(user.id), getPlan(user.id)])
+  const planHint =
+    plan.source === "stripe"
+      ? plan.subscription?.cancelAtPeriodEnd && plan.subscription.currentPeriodEnd
+        ? `Cancelado · acesso até ${formatDate(plan.subscription.currentPeriodEnd)}`
+        : "Assinatura ativa · gerenciar"
+      : plan.source === "founder" && plan.proUntil
+        ? `Fundador · Pro grátis até ${formatDate(plan.proUntil)}`
+        : "Clubes ilimitados, estatísticas e mais"
 
   const items = [
     { label: "Sequência atual", value: `${stats.current} ${stats.current === 1 ? "dia" : "dias"}` },
@@ -52,14 +66,30 @@ async function ProfileContent() {
           <SpiralDoodle seed={5} turns={7} className="pointer-events-none absolute -top-8 -right-8 w-32 opacity-15" />
           <UserAvatar name={user.name} className="size-16 text-lg" />
           <div className="min-w-0">
-            <p className="truncate text-lg font-semibold">{user.name}</p>
+            <p className="truncate text-lg font-semibold">
+              {user.name} {plan.isPro && <ProBadge className="ml-1" />}
+            </p>
             <p className="truncate text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
 
+        <Link
+          href="/assinatura"
+          className="flex items-center gap-3 rounded-2xl bg-primary p-4 text-primary-foreground transition-transform active:scale-[0.99]"
+        >
+          <SparkleIcon className="size-6 shrink-0" weight="fill" />
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">{plan.isPro ? "Cervo Pro" : "Conheça o Cervo Pro"}</span>
+            <span className="block text-xs opacity-90">{planHint}</span>
+          </span>
+          <CaretRightIcon className="size-4" />
+        </Link>
+
         <EditGoalDrawer goalType={user.goalType} dailyGoal={user.dailyGoal} />
 
         <ThemeSelector />
+
+        <AccentPicker current={plan.isPro && isAccent(user.accent) ? user.accent : "cobalto"} isPro={plan.isPro} />
 
         <dl className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {items.map((item) => (
