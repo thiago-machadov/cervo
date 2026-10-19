@@ -1,10 +1,5 @@
 import { Suspense } from "react"
-import { AccentSync } from "@/components/accent-sync"
 import { BottomNav, BottomNavItems } from "@/components/bottom-nav"
-import { isAccent } from "@/lib/accents"
-import { getSessionUser } from "@/lib/auth"
-import { getSessionUserId } from "@/lib/session"
-import { isPro } from "@/lib/plan"
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
@@ -16,19 +11,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       <Suspense fallback={<BottomNavItems />}>
         <BottomNav />
       </Suspense>
-      <Suspense>
-        <UserAccent />
-      </Suspense>
     </div>
   )
 }
 
-/** Cor do app da conta (só vale enquanto for Pro). */
-async function UserAccent() {
-  // /instalar é pública e fica neste layout: sem sessão, nada a fazer.
-  if (!(await getSessionUserId())) return null
-  // getSessionUser e isPro têm cache por request: reaproveitam as consultas da própria página.
-  const user = await getSessionUser()
-  const accent = user.accent && isAccent(user.accent) && (await isPro(user.id)) ? user.accent : null
-  return <AccentSync accent={accent} />
-}

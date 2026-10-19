@@ -32,7 +32,7 @@ const product =
   products.data[0] ??
   (await stripe.products.create({
     name: "Cervo Pro",
-    description: "Clubes ilimitados, estatísticas e retrospectiva, cores do app, desafios e exportação do ranking.",
+    description: "Clubes ilimitados, estatísticas e retrospectiva, desafios e exportação do ranking.",
     metadata: { app: "cervo" },
   }))
 console.log(`Produto: ${product.id}`)

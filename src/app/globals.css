@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* O app só tem tema claro; as classes dark: dos componentes nunca se aplicam (não existe .dark). */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -50,7 +51,7 @@
 
 :root {
   /* Paleta: azul cobalto + cinza papel (referência "Book Club"). */
-  /* Tonalidade das cores de destaque; as cores do Pro só trocam este número (ver [data-accent]). */
+  /* Tonalidade das cores de destaque (cobalto). */
   --hue: 266;
   --background: oklch(0.945 0.004 95);
   --foreground: oklch(0.24 0.05 var(--hue));
@@ -86,46 +87,6 @@
   --sidebar-ring: oklch(0.42 0.18 var(--hue));
 }
 
-.dark {
-  --background: oklch(0.17 0.03 var(--hue));
-  --foreground: oklch(0.95 0.01 95);
-  --card: oklch(0.22 0.04 var(--hue));
-  --card-foreground: oklch(0.95 0.01 95);
-  --popover: oklch(0.22 0.04 var(--hue));
-  --popover-foreground: oklch(0.95 0.01 95);
-  --primary: oklch(0.7 0.14 var(--hue));
-  --primary-foreground: oklch(0.16 0.04 var(--hue));
-  --secondary: oklch(0.3 0.07 var(--hue));
-  --secondary-foreground: oklch(0.92 0.03 var(--hue));
-  --muted: oklch(0.27 0.04 var(--hue));
-  --muted-foreground: oklch(0.72 0.03 var(--hue));
-  --accent: oklch(0.3 0.07 var(--hue));
-  --accent-foreground: oklch(0.92 0.03 var(--hue));
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.14 var(--hue));
-  --chart-1: oklch(0.7 0.14 var(--hue));
-  --chart-2: oklch(0.6 0.14 var(--hue));
-  --chart-3: oklch(0.5 0.12 var(--hue));
-  --chart-4: oklch(0.8 0.08 var(--hue));
-  --chart-5: oklch(0.4 0.1 var(--hue));
-  --sidebar: oklch(0.22 0.04 var(--hue));
-  --sidebar-foreground: oklch(0.95 0.01 95);
-  --sidebar-primary: oklch(0.7 0.14 var(--hue));
-  --sidebar-primary-foreground: oklch(0.16 0.04 var(--hue));
-  --sidebar-accent: oklch(0.3 0.07 var(--hue));
-  --sidebar-accent-foreground: oklch(0.92 0.03 var(--hue));
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.7 0.14 var(--hue));
-}
-
-/* Cores do app (recurso Pro), aplicadas no <html> com data-accent. */
-:root[data-accent="floresta"] { --hue: 152; }
-:root[data-accent="vinho"] { --hue: 12; }
-:root[data-accent="terracota"] { --hue: 45; }
-:root[data-accent="ameixa"] { --hue: 320; }
-:root[data-accent="petroleo"] { --hue: 215; }
 
 @layer base {
   * {

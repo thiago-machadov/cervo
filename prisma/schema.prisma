@@ -57,8 +57,6 @@ model User {
   onboardedAt DateTime?
   /// Pro de cortesia até esta data (fundadores), independente do Stripe
   proUntil    DateTime?
-  /// Cor do app escolhida (recurso Pro); null = cobalto
-  accent      String?
   createdAt   DateTime  @default(now())
 
   books       Book[]

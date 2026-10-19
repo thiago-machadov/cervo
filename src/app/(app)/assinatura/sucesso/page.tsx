@@ -41,7 +41,7 @@ async function SuccessContent({ searchParams }: Pick<PageProps<"/assinatura/suce
       <h1 className="font-display text-4xl font-bold text-primary uppercase">{confirmed ? "Bem-vindo ao Pro!" : "Quase lá"}</h1>
       <p className="max-w-xs text-sm text-muted-foreground">
         {confirmed
-          ? "Sua assinatura está ativa. Clubes ilimitados, estatísticas, cores e desafios já estão liberados."
+          ? "Sua assinatura está ativa. Clubes ilimitados, estatísticas e desafios já estão liberados."
           : "Estamos confirmando seu pagamento com o Stripe. Isso leva alguns segundos; atualize a página da assinatura em instantes."}
       </p>
       <div className="flex w-full max-w-xs flex-col gap-2">

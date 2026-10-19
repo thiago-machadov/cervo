@@ -32,7 +32,6 @@ const FEATURES: { label: string; free: string | boolean; pro: string | boolean }
   { label: "Feed, amigos, reações e comentários", free: true, pro: true },
   { label: "Clubes", free: `até ${FREE_CLUB_LIMIT}`, pro: "ilimitados" },
   { label: "Estatísticas e retrospectiva do ano", free: false, pro: true },
-  { label: "Cores do app", free: false, pro: true },
   { label: "Desafios no clube (para o dono)", free: false, pro: true },
   { label: "Exportar ranking do clube", free: false, pro: true },
   { label: "Selo Pro no perfil", free: false, pro: true },
@@ -68,7 +67,7 @@ async function SubscriptionContent({ searchParams }: Pick<PageProps<"/assinatura
         <DeerDoodle className="absolute -right-4 -bottom-6 w-28 opacity-25" />
         <p className="font-display text-3xl font-bold uppercase">Leia mais junto</p>
         <p className="mt-1 max-w-[16rem] text-sm opacity-90">
-          Clubes ilimitados, estatísticas do seu ano de leitura, desafios e as cores do seu jeito.
+          Clubes ilimitados, estatísticas e retrospectiva do seu ano de leitura e desafios para o clube.
         </p>
       </section>
 

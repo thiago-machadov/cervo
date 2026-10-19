@@ -1,8 +1,6 @@
 "use server"
 
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { ACCENT_COOKIE } from "@/lib/accents"
 import { siteOrigin } from "@/lib/site"
 import { z } from "zod"
 import { ensureProfile } from "@/lib/auth"
@@ -152,7 +150,5 @@ export async function updatePassword(_prev: AuthState, formData: FormData): Prom
 export async function signOut() {
   const supabase = await createSupabaseServerClient()
   await supabase.auth.signOut()
-  // A cor do app é da conta: ao sair, volta ao cobalto.
-  ;(await cookies()).delete(ACCENT_COOKIE)
   redirect("/boas-vindas")
 }

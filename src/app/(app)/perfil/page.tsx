@@ -3,17 +3,14 @@ import Link from "next/link"
 import { CaretRightIcon, ChartLineUpIcon, ChatCircleDotsIcon, DeviceMobileIcon, ShieldCheckIcon, SignOutIcon, SparkleIcon, UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
 import type { Icon } from "@phosphor-icons/react/lib"
 import { SpiralDoodle, ThreadDoodle } from "@/components/doodles"
-import { AccentPicker } from "@/components/accent-picker"
 import { EditGoalDrawer } from "@/components/edit-goal-drawer"
 import { SubmitButton } from "@/components/submit-button"
-import { ThemeSelector } from "@/components/theme-selector"
 import { PageHeader } from "@/components/page-header"
 import { PageSuspense } from "@/components/page-suspense"
 import { ProBadge } from "@/components/pro-badge"
 import { UserAvatar } from "@/components/user-avatar"
 import { signOut } from "@/app/actions/auth"
 import { getCurrentUser } from "@/lib/auth"
-import { isAccent } from "@/lib/accents"
 import { formatDate } from "@/lib/dates"
 import { getPlan } from "@/lib/plan"
 import { getUserStats } from "@/lib/queries"
@@ -86,9 +83,6 @@ async function ProfileContent() {
 
         <EditGoalDrawer goalType={user.goalType} dailyGoal={user.dailyGoal} />
 
-        <ThemeSelector />
-
-        <AccentPicker current={plan.isPro && isAccent(user.accent) ? user.accent : "cobalto"} isPro={plan.isPro} />
 
         <dl className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {items.map((item) => (
