@@ -16,20 +16,24 @@
 	"limits": {
 		"cpu_ms": 200
 	},
-	// Roda o Worker ao lado do banco (Supabase em aws us-east-1) em vez de perto do usuário:
+	// Roda o Worker em São Paulo, ao lado do banco (Supabase em aws sa-east-1) e perto dos leitores:
 	// cada página faz várias consultas, e cada uma vira uma ida e volta curta.
-	// O modo "smart" tinha escolhido Amsterdã (longe do banco e do Brasil), por isso a região fixa.
 	"placement": {
 		"mode": "targeted",
-		"region": "aws:us-east-1"
+		"region": "aws:sa-east-1"
 	},
-	// Pool de conexões da Cloudflare na frente do Supabase (session pooler, porta 5432), cache de consultas desligado.
+	// Supabase (só usado no servidor). Valores públicos por natureza: URL do projeto e chave publishable.
+	"vars": {
+		"SUPABASE_URL": "https://jplhhxrpwinvyliiyylm.supabase.co",
+		"SUPABASE_PUBLISHABLE_KEY": "sb_publishable_zlfAkxr7CotnHMhUjcQ9Eg_JxV7InTa"
+	},
+	// Pool de conexões da Cloudflare na frente do Supabase (conexão direta, São Paulo), cache de consultas desligado.
 	// Evita abrir conexão TLS nova com o banco a cada request. No `next dev` o app usa DATABASE_URL direto;
 	// localConnectionString (Supabase local, credenciais padrão) só serve para o wrangler simular o binding.
 	"hyperdrive": [
 		{
 			"binding": "HYPERDRIVE",
-			"id": "6fcffb6a790e47bb9387383c04db479f",
+			"id": "c76e1645a02143c499b9fb3a4078a70f",
 			"localConnectionString": "postgresql://postgres:postgres@127.0.0.1:55422/postgres"
 		}
 	],
