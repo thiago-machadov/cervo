@@ -18,7 +18,7 @@ export function FeedItem({
 }) {
   const { user, book } = checkIn
   const finished = checkIn.toPage === book.totalPages
-  const percent = Math.round((checkIn.toPage / book.totalPages) * 100)
+  const percent = Math.min(100, Math.round((checkIn.toPage / book.totalPages) * 100))
 
   const content = (
     <div className="space-y-2">

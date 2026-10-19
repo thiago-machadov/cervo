@@ -42,8 +42,8 @@ async function TodayContent() {
   return (
     <main className="space-y-6 pb-4">
       <header className="space-y-5 px-5 pt-[calc(env(safe-area-inset-top)+1rem)] md:px-4 md:pt-8">
-        {/* No desktop o logo já está no menu lateral. */}
-        <div className="flex items-center justify-between lg:hidden">
+        {/* Do tablet em diante o logo já está no menu lateral. */}
+        <div className="flex items-center justify-between md:hidden">
           <DeerDoodle className="w-10" label="Cervo" />
           <Link href="/perfil" aria-label="Perfil">
             <UserAvatar name={user.name} className="size-10 ring-2 ring-card" />

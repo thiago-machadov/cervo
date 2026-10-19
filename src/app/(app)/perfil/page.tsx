@@ -1,6 +1,15 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CaretRightIcon, ChartLineUpIcon, ChatCircleDotsIcon, DeviceMobileIcon, ShieldCheckIcon, SignOutIcon, SparkleIcon, UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
+import {
+  CaretRightIcon,
+  ChartLineUpIcon,
+  ChatCircleDotsIcon,
+  DeviceMobileIcon,
+  ShieldCheckIcon,
+  SignOutIcon,
+  SparkleIcon,
+  UsersThreeIcon,
+} from "@phosphor-icons/react/dist/ssr"
 import type { Icon } from "@phosphor-icons/react/lib"
 import { SpiralDoodle, ThreadDoodle } from "@/components/doodles"
 import { EditGoalDrawer } from "@/components/edit-goal-drawer"
@@ -55,70 +64,74 @@ async function ProfileContent() {
   ]
 
   return (
-    <main className="md:mx-auto md:max-w-2xl">
+    <main className="md:mx-auto md:max-w-2xl lg:max-w-none">
       <PageHeader title="Perfil" />
-      <div className="space-y-6 px-4">
-        <div className="relative flex items-center gap-4 overflow-hidden rounded-2xl bg-card p-4 ring-1 ring-border/60">
-          <SpiralDoodle seed={5} turns={7} className="pointer-events-none absolute -top-8 -right-8 w-32 opacity-15" />
-          <UserAvatar name={user.name} className="size-16 text-lg" />
-          <div className="min-w-0">
-            <p className="truncate text-lg font-semibold">
-              {user.name} {plan.isPro && <ProBadge className="ml-1" />}
-            </p>
-            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+      {/* Desktop: conta e números à esquerda, atalhos à direita. */}
+      <div className="space-y-6 px-4 lg:grid lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-start lg:gap-6 lg:space-y-0">
+        <div className="space-y-6">
+          <div className="relative flex items-center gap-4 overflow-hidden rounded-2xl bg-card p-4 ring-1 ring-border/60">
+            <SpiralDoodle seed={5} turns={7} className="pointer-events-none absolute -top-8 -right-8 w-32 opacity-15" />
+            <UserAvatar name={user.name} className="size-16 text-lg" />
+            <div className="min-w-0">
+              <p className="truncate text-lg font-semibold">
+                {user.name} {plan.isPro && <ProBadge className="ml-1" />}
+              </p>
+              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+            </div>
           </div>
+
+          <Link
+            href="/assinatura"
+            className="flex items-center gap-3 rounded-2xl bg-primary p-4 text-primary-foreground transition-transform active:scale-[0.99]"
+          >
+            <SparkleIcon className="size-6 shrink-0" weight="fill" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">{plan.isPro ? "Cervo Pro" : "Conheça o Cervo Pro"}</span>
+              <span className="block text-xs opacity-90">{planHint}</span>
+            </span>
+            <CaretRightIcon className="size-4" />
+          </Link>
+
+          <EditGoalDrawer goalType={user.goalType} dailyGoal={user.dailyGoal} />
+
+          <dl className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {items.map((item) => (
+              <div key={item.label} className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
+                <dt className="text-xs text-muted-foreground">{item.label}</dt>
+                <dd className="font-display text-3xl font-bold text-primary tabular-nums">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
-        <Link
-          href="/assinatura"
-          className="flex items-center gap-3 rounded-2xl bg-primary p-4 text-primary-foreground transition-transform active:scale-[0.99]"
-        >
-          <SparkleIcon className="size-6 shrink-0" weight="fill" />
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold">{plan.isPro ? "Cervo Pro" : "Conheça o Cervo Pro"}</span>
-            <span className="block text-xs opacity-90">{planHint}</span>
-          </span>
-          <CaretRightIcon className="size-4" />
-        </Link>
+        <div className="space-y-6">
+          <nav className="space-y-3">
+            {LINKS.map(({ href, icon: LinkIcon, title, description }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border/60 transition-transform active:scale-[0.99]"
+              >
+                <span className="flex size-11 items-center justify-center rounded-full bg-secondary text-primary">
+                  <LinkIcon className="size-6" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{title}</span>
+                  <span className="block text-xs text-muted-foreground">{description}</span>
+                </span>
+                <CaretRightIcon className="size-4 text-muted-foreground" />
+              </Link>
+            ))}
+          </nav>
 
-        <EditGoalDrawer goalType={user.goalType} dailyGoal={user.dailyGoal} />
+          <ThreadDoodle className="mx-auto w-56 opacity-60" />
 
-
-        <dl className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {items.map((item) => (
-            <div key={item.label} className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-              <dt className="text-xs text-muted-foreground">{item.label}</dt>
-              <dd className="font-display text-3xl font-bold text-primary tabular-nums">{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-
-        <nav className="space-y-3">
-          {LINKS.map(({ href, icon: LinkIcon, title, description }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border/60 transition-transform active:scale-[0.99]"
-            >
-              <span className="flex size-11 items-center justify-center rounded-full bg-secondary text-primary">
-                <LinkIcon className="size-6" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-semibold">{title}</span>
-                <span className="block text-xs text-muted-foreground">{description}</span>
-              </span>
-              <CaretRightIcon className="size-4 text-muted-foreground" />
-            </Link>
-          ))}
-        </nav>
-
-        <ThreadDoodle className="mx-auto w-56 opacity-60" />
-
-        <form action={signOut}>
-          <SubmitButton variant="outline" className="h-11 w-full" pendingText="Saindo…">
-            <SignOutIcon /> Sair
-          </SubmitButton>
-        </form>
+          <form action={signOut}>
+            <SubmitButton variant="outline" className="h-11 w-full" pendingText="Saindo…">
+              <SignOutIcon /> Sair
+            </SubmitButton>
+          </form>
+        </div>
       </div>
     </main>
   )
