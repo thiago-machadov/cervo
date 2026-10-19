@@ -61,9 +61,10 @@ async function FriendsLinkWithCount() {
 async function FeedContent({ searchParams }: Pick<PageProps<"/feed">, "searchParams">) {
   const { clube } = await searchParams
   const user = await getCurrentUser()
-  const clubs = await getUserClubs(user.id)
-  const clubId = typeof clube === "string" && clubs.some((c) => c.id === clube) ? clube : undefined
-  const feed = await getHomeFeed(user.id, clubId)
+  // Em paralelo: o getHomeFeed já só devolve check-ins de clubes de que o usuário participa.
+  const requested = typeof clube === "string" ? clube : undefined
+  const [clubs, feed] = await Promise.all([getUserClubs(user.id), getHomeFeed(user.id, requested)])
+  const clubId = requested && clubs.some((c) => c.id === requested) ? requested : undefined
 
   const chips = [{ id: undefined, name: "Todos" }, ...clubs.map((c) => ({ id: c.id, name: c.name }))]
 

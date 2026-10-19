@@ -2,8 +2,8 @@ import { Suspense } from "react"
 import { AccentSync } from "@/components/accent-sync"
 import { BottomNav, BottomNavItems } from "@/components/bottom-nav"
 import { isAccent } from "@/lib/accents"
+import { getSessionUser } from "@/lib/auth"
 import { getSessionUserId } from "@/lib/session"
-import { db } from "@/lib/db"
 import { isPro } from "@/lib/plan"
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
@@ -25,9 +25,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
 
 /** Cor do app da conta (só vale enquanto for Pro). */
 async function UserAccent() {
-  const userId = await getSessionUserId()
-  if (!userId) return null
-  const user = await db.user.findUnique({ where: { id: userId }, select: { accent: true } })
-  const accent = user?.accent && isAccent(user.accent) && (await isPro(userId)) ? user.accent : null
+  // /instalar é pública e fica neste layout: sem sessão, nada a fazer.
+  if (!(await getSessionUserId())) return null
+  // getSessionUser e isPro têm cache por request: reaproveitam as consultas da própria página.
+  const user = await getSessionUser()
+  const accent = user.accent && isAccent(user.accent) && (await isPro(user.id)) ? user.accent : null
   return <AccentSync accent={accent} />
 }

@@ -79,14 +79,14 @@ async function circleUserIds(userId: string) {
 
 /** Feed: check-ins de quem divide clube com o usuário e dos amigos; com `clubId`, só dos membros daquele clube. */
 export async function getHomeFeed(userId: string, clubId?: string) {
-  let ids = await circleUserIds(userId)
-  if (clubId) {
-    const members = await db.clubMember.findMany({
-      where: { clubId, club: { members: { some: { userId } } } },
-      select: { userId: true },
-    })
-    ids = members.map((m) => m.userId)
-  }
+  const ids = clubId
+    ? (
+        await db.clubMember.findMany({
+          where: { clubId, club: { members: { some: { userId } } } },
+          select: { userId: true },
+        })
+      ).map((m) => m.userId)
+    : await circleUserIds(userId)
   return db.checkIn.findMany({
     where: { userId: { in: ids } },
     include: feedInclude,
