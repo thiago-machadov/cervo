@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { FlockDoodle } from "@/components/doodles"
 import { PageSuspense } from "@/components/page-suspense"
+import { AutoRefresh } from "@/components/auto-refresh"
 import { Button } from "@/components/ui/button"
 import { getCurrentUser } from "@/lib/auth"
 import { syncStripeCustomer } from "@/lib/plan"
@@ -42,12 +43,19 @@ async function SuccessContent({ searchParams }: Pick<PageProps<"/assinatura/suce
       <p className="max-w-xs text-sm text-muted-foreground">
         {confirmed
           ? "Sua assinatura está ativa. Clubes ilimitados, estatísticas e desafios já estão liberados."
-          : "Estamos confirmando seu pagamento com o Stripe. Isso leva alguns segundos; atualize a página da assinatura em instantes."}
+          : "Estamos confirmando seu pagamento com o Stripe. Isso costuma levar poucos segundos e esta tela se atualiza sozinha."}
       </p>
+      {!confirmed && <AutoRefresh />}
       <div className="flex w-full max-w-xs flex-col gap-2">
-        <Button className="h-11" render={<Link href="/estatisticas" />} nativeButton={false}>
-          Ver minhas estatísticas
-        </Button>
+        {confirmed ? (
+          <Button className="h-11" render={<Link href="/estatisticas" />} nativeButton={false}>
+            Ver minhas estatísticas
+          </Button>
+        ) : (
+          <Button className="h-11" render={<Link href={`/assinatura/sucesso?session_id=${session_id ?? ""}`} />} nativeButton={false}>
+            Verificar de novo
+          </Button>
+        )}
         <Button variant="ghost" className="h-11" render={<Link href="/assinatura" />} nativeButton={false}>
           Ver minha assinatura
         </Button>

@@ -40,7 +40,7 @@ async function PersonContent({ params }: Pick<PageProps<"/pessoas/[id]">, "param
   const isSelf = friendState.kind === "self"
   const items = stats
     ? [
-        { label: "Sequência", value: stats.current },
+        { label: "Sequência", value: `${stats.current} ${stats.current === 1 ? "dia" : "dias"}` },
         { label: "Páginas", value: stats.totalPages.toLocaleString("pt-BR") },
         { label: "Livros lidos", value: stats.booksDone },
       ]

@@ -2,30 +2,86 @@
 
 import { useTransition } from "react"
 import { TrashIcon } from "@phosphor-icons/react/dist/ssr"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { useConfirm } from "@/components/confirm-dialog"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { removeFromLibrary, setLibraryStatus } from "@/app/actions/library"
+import { cn } from "@/lib/utils"
 import { STATUS_LABEL } from "@/lib/utils-text"
 
 type Status = "WANT" | "READING" | "DONE"
 
-export function LibraryStatusTabs({ itemId, status }: { itemId: string; status: string }) {
+/**
+ * Status do livro na biblioteca (grupo de opções, não abas: muda o dado, não a tela).
+ * Marcar como lido leva o progresso a 100%: pede confirmação e oferece desfazer.
+ */
+export function LibraryStatusTabs({
+  itemId,
+  status,
+  currentPage,
+  totalPages,
+}: {
+  itemId: string
+  status: string
+  currentPage: number
+  totalPages: number
+}) {
   const [pending, startTransition] = useTransition()
+  const confirm = useConfirm()
+
+  async function choose(next: Status) {
+    if (next === status) return
+    const previous = status as Status
+    if (next === "DONE" && currentPage < totalPages) {
+      const ok = await confirm({
+        title: "Marcar como lido?",
+        description: `Seu progresso vai para 100% (você está na página ${currentPage} de ${totalPages}).`,
+        confirmLabel: "Marcar como lido",
+      })
+      if (!ok) return
+    }
+    startTransition(async () => {
+      await setLibraryStatus(itemId, next)
+      toast.success(`Movido para “${STATUS_LABEL[next]}”`, {
+        // Tempo suficiente para perceber e desfazer.
+        duration: 8000,
+        action: { label: "Desfazer", onClick: () => startTransition(() => setLibraryStatus(itemId, previous)) },
+      })
+    })
+  }
 
   return (
-    <Tabs
-      value={status}
-      onValueChange={(value) => startTransition(() => setLibraryStatus(itemId, value as Status))}
-    >
-      <TabsList variant="pill" className="w-full" aria-busy={pending}>
-        {(Object.keys(STATUS_LABEL) as Status[]).map((key) => (
-          <TabsTrigger key={key} value={key} disabled={pending}>
-            {STATUS_LABEL[key]}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+    <div className="space-y-2">
+      <p id={`status-${itemId}`} className="text-xs font-medium text-muted-foreground">
+        Status
+      </p>
+      <div
+        role="radiogroup"
+        aria-labelledby={`status-${itemId}`}
+        aria-busy={pending}
+        className="grid grid-cols-3 gap-1 rounded-full bg-muted p-1"
+      >
+        {(Object.keys(STATUS_LABEL) as Status[]).map((key) => {
+          const selected = key === status
+          return (
+            <button
+              key={key}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              disabled={pending}
+              onClick={() => choose(key)}
+              className={cn(
+                "h-10 rounded-full text-sm font-medium text-muted-foreground transition-colors disabled:opacity-60",
+                selected && "bg-card text-foreground shadow-sm"
+              )}
+            >
+              {STATUS_LABEL[key]}
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 

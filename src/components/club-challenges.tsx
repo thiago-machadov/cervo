@@ -38,7 +38,14 @@ export function ClubChallenges({ challenges, viewerId, canManage }: { challenges
 
             {mine && (
               <div className="space-y-1">
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-2 overflow-hidden rounded-full bg-muted"
+                  role="progressbar"
+                  aria-label={`Seu progresso em ${challenge.title}`}
+                  aria-valuemin={0}
+                  aria-valuemax={challenge.targetDays}
+                  aria-valuenow={Math.min(mine.days, challenge.targetDays)}
+                >
                   <div
                     className="h-full rounded-full bg-primary"
                     style={{ width: `${Math.min(100, (mine.days / challenge.targetDays) * 100)}%` }}

@@ -1,7 +1,9 @@
 import { FlameDoodle, SpiralDoodle } from "@/components/doodles"
 import { cn } from "@/lib/utils"
 
-const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "narrow", timeZone: "UTC" })
+// "short" (seg, ter, qua…) em vez de "narrow" (S, T, Q…), que repete letras e confunde.
+const weekdayShort = new Intl.DateTimeFormat("pt-BR", { weekday: "short", timeZone: "UTC" })
+const weekdayLong = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })
 
 export function StreakCard({
   current,
@@ -30,20 +32,29 @@ export function StreakCard({
         <FlameDoodle className={cn("relative w-11 text-primary-foreground", !readToday && "opacity-40")} />
       </div>
 
-      <ol className="grid grid-cols-7 gap-1.5">
-        {lastWeek.map(({ day, read }) => (
-          <li key={day} className="flex flex-col items-center gap-1">
-            <span
-              className={cn(
-                "flex size-8 items-center justify-center rounded-full text-xs",
-                read ? "bg-primary-foreground font-bold text-primary" : "bg-primary-foreground/12"
-              )}
-            >
-              {read ? "✓" : ""}
-            </span>
-            <span className="text-[0.65rem] uppercase opacity-60">{weekday.format(new Date(`${day}T12:00:00Z`))}</span>
-          </li>
-        ))}
+      <ol className="grid grid-cols-7 gap-1.5" aria-label="Leitura nos últimos 7 dias">
+        {lastWeek.map(({ day, read }) => {
+          const date = new Date(`${day}T12:00:00Z`)
+          return (
+            <li key={day} className="flex flex-col items-center gap-1">
+              <span
+                aria-hidden
+                className={cn(
+                  "flex size-8 items-center justify-center rounded-full text-xs",
+                  read ? "bg-primary-foreground font-bold text-primary" : "bg-primary-foreground/12"
+                )}
+              >
+                {read ? "✓" : ""}
+              </span>
+              <span aria-hidden className="text-[0.65rem] opacity-60">
+                {weekdayShort.format(date).replace(".", "")}
+              </span>
+              <span className="sr-only">
+                {weekdayLong.format(date)}: {read ? "leu" : "não leu"}
+              </span>
+            </li>
+          )
+        })}
       </ol>
 
       <p className="text-sm opacity-80">
@@ -52,7 +63,12 @@ export function StreakCard({
           : current > 0
             ? "Faça o check-in de hoje para não perder a sequência."
             : "Registre uma leitura para começar sua sequência."}
-        {longest > 0 && <span className="opacity-70"> · Recorde: {longest}</span>}
+        {longest > 0 && (
+          <span className="opacity-70">
+            {" "}
+            · Recorde: {longest} {longest === 1 ? "dia" : "dias"}
+          </span>
+        )}
       </p>
       {children}
     </section>

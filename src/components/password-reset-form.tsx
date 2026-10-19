@@ -4,13 +4,15 @@ import Link from "next/link"
 import { useActionState } from "react"
 import { EnvelopeDoodle } from "@/components/doodles"
 import { Button } from "@/components/ui/button"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { PasswordInput } from "@/components/password-input"
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { requestPasswordReset, updatePassword } from "@/app/actions/auth"
 
 /** Pede o e-mail e envia o link de redefinição. */
-export function RequestResetForm() {
+export function RequestResetForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(requestPasswordReset, undefined)
+  const loginHref = next ? `/entrar?next=${encodeURIComponent(next)}` : "/entrar"
 
   if (state?.sent) {
     return (
@@ -23,7 +25,7 @@ export function RequestResetForm() {
             para criar uma senha nova. Ele vale por pouco tempo.
           </p>
         </div>
-        <Link href="/entrar" className="block text-sm font-semibold text-primary">
+        <Link href={loginHref} className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">
           Voltar para o login
         </Link>
       </div>
@@ -41,6 +43,8 @@ export function RequestResetForm() {
             type="email"
             autoComplete="email"
             inputMode="email"
+            autoCapitalize="none"
+            spellCheck={false}
             defaultValue={state?.email}
             required
             className="h-12"
@@ -53,7 +57,7 @@ export function RequestResetForm() {
       </Button>
       <p className="text-center text-sm text-muted-foreground">
         Lembrou?{" "}
-        <Link href="/entrar" className="font-semibold text-primary">
+        <Link href={loginHref} className="font-semibold text-primary">
           Entrar
         </Link>
       </p>
@@ -70,11 +74,12 @@ export function NewPasswordForm() {
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="password">Nova senha</FieldLabel>
-          <Input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required className="h-12" />
+          <PasswordInput id="password" name="password" autoComplete="new-password" minLength={8} required className="h-12" />
+          <FieldDescription>Pelo menos 8 caracteres.</FieldDescription>
         </Field>
         <Field>
           <FieldLabel htmlFor="confirm">Repita a nova senha</FieldLabel>
-          <Input id="confirm" name="confirm" type="password" autoComplete="new-password" minLength={8} required className="h-12" />
+          <PasswordInput id="confirm" name="confirm" autoComplete="new-password" minLength={8} required className="h-12" />
         </Field>
         {state?.error && <FieldError>{state.error}</FieldError>}
       </FieldGroup>

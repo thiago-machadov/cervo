@@ -29,7 +29,7 @@ export function EditGoalDrawer({ goalType, dailyGoal }: { goalType: string | nul
             {dailyGoal ? `${dailyGoal} ${goalUnit(goalType, dailyGoal)} por dia` : "Definir meta"}
           </span>
         </span>
-        <span className="text-sm font-semibold text-primary">Alterar</span>
+        <span className="text-sm font-semibold text-primary">{dailyGoal ? "Alterar" : "Definir"}</span>
       </DrawerTrigger>
       <DrawerContent>
         <div className="mx-auto w-full max-w-md overflow-y-auto">

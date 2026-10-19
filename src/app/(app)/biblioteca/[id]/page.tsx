@@ -11,6 +11,7 @@ import { SectionHeader } from "@/components/section-header"
 import { Button } from "@/components/ui/button"
 import { getCurrentUser } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { formatDate } from "@/lib/dates"
 import { getLibraryItem } from "@/lib/queries"
 import { getSessionUserId } from "@/lib/session"
 
@@ -69,7 +70,7 @@ async function LibraryItemContent({ params }: Pick<PageProps<"/biblioteca/[id]">
           </div>
         </div>
 
-        <LibraryStatusTabs itemId={item.id} status={item.status} />
+        <LibraryStatusTabs itemId={item.id} status={item.status} currentPage={item.currentPage} totalPages={book.totalPages} />
 
         {canCheckIn && (
           <CheckInDrawer
@@ -82,6 +83,13 @@ async function LibraryItemContent({ params }: Pick<PageProps<"/biblioteca/[id]">
               </Button>
             }
           />
+        )}
+        {!canCheckIn && (
+          <p className="rounded-2xl bg-secondary p-3 text-sm text-secondary-foreground">
+            {/* O mês abreviado já termina em ponto ("out."): evita "out..". */}
+            🎉 Livro terminado{item.finishedAt ? ` em ${formatDate(item.finishedAt).replace(/\.$/, "")}` : ""}. Para registrar leitura de novo, mude o status
+            para “Lendo”.
+          </p>
         )}
       </div>
 

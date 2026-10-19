@@ -16,7 +16,7 @@ export function PlanPicker({ prices, founderUntil }: { prices: { month: number; 
   const savings = Math.round((1 - prices.year / (prices.month * 12)) * 100)
 
   const options = [
-    { value: "year" as const, title: "Anual", price: brl(prices.year), hint: `${brl(prices.year / 12)}/mês · economize ${savings}%` },
+    { value: "year" as const, title: "Anual", price: brl(prices.year), hint: `por ano · ${brl(prices.year / 12)}/mês · economize ${savings}%` },
     { value: "month" as const, title: "Mensal", price: brl(prices.month), hint: "por mês" },
   ]
 

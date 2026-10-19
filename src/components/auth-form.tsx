@@ -4,7 +4,8 @@ import Link from "next/link"
 import { useActionState } from "react"
 import { EnvelopeDoodle } from "@/components/doodles"
 import { Button } from "@/components/ui/button"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { PasswordInput } from "@/components/password-input"
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { resendConfirmation, signIn, signUp, type AuthState } from "@/app/actions/auth"
 
@@ -23,7 +24,16 @@ export function AuthForm({ mode, next, initialError }: { mode: "signin" | "signu
         {mode === "signup" && (
           <Field>
             <FieldLabel htmlFor="name">Nome</FieldLabel>
-            <Input id="name" name="name" autoComplete="name" defaultValue={state?.values?.name} required className="h-12" />
+            <Input
+              id="name"
+              name="name"
+              autoComplete="name"
+              autoCapitalize="words"
+              maxLength={60}
+              defaultValue={state?.values?.name}
+              required
+              className="h-12"
+            />
           </Field>
         )}
         <Field>
@@ -34,6 +44,8 @@ export function AuthForm({ mode, next, initialError }: { mode: "signin" | "signu
             type="email"
             autoComplete="email"
             inputMode="email"
+            autoCapitalize="none"
+            spellCheck={false}
             defaultValue={state?.values?.email}
             required
             className="h-12"
@@ -43,26 +55,27 @@ export function AuthForm({ mode, next, initialError }: { mode: "signin" | "signu
           <div className="flex items-center justify-between">
             <FieldLabel htmlFor="password">Senha</FieldLabel>
             {mode === "signin" && (
-              <Link href="/esqueci-senha" className="text-xs font-semibold text-primary">
+              <Link href={`/esqueci-senha${nextQuery}`} className="-my-3 inline-flex min-h-11 items-center text-xs font-semibold text-primary">
                 Esqueci minha senha
               </Link>
             )}
           </div>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete={mode === "signin" ? "current-password" : "new-password"}
             minLength={mode === "signup" ? 8 : undefined}
             required
             className="h-12"
           />
+          {mode === "signup" && <FieldDescription>Pelo menos 8 caracteres.</FieldDescription>}
         </Field>
         {error && <FieldError>{error}</FieldError>}
+        {state?.unconfirmed && <ResendInline email={state.unconfirmed} />}
       </FieldGroup>
 
       <Button type="submit" size="lg" className="h-13 w-full text-base font-semibold" disabled={pending}>
-        {pending ? "Aguarde…" : mode === "signin" ? "Entrar" : "Criar conta"}
+        {pending ? (mode === "signin" ? "Entrando…" : "Criando conta…") : mode === "signin" ? "Entrar" : "Criar conta"}
       </Button>
 
       {mode === "signup" && (
@@ -97,6 +110,28 @@ export function AuthForm({ mode, next, initialError }: { mode: "signin" | "signu
         )}
       </p>
     </form>
+  )
+}
+
+/** Ao tentar entrar sem ter confirmado o e-mail: reenviar o link ali mesmo. */
+function ResendInline({ email }: { email: string }) {
+  const [state, action, pending] = useActionState<AuthState, FormData>(resendConfirmation, undefined)
+  return (
+    <div className="space-y-1">
+      <Button
+        type="submit"
+        formAction={action}
+        variant="outline"
+        className="h-11 w-full"
+        // Dentro do formulário de login: usa o e-mail digitado e não exige a senha.
+        formNoValidate
+        disabled={pending || state?.resent}
+        title={`Reenviar para ${email}`}
+      >
+        {pending ? "Reenviando…" : state?.resent ? "Link reenviado. Confira seu e-mail" : "Reenviar link de confirmação"}
+      </Button>
+      {state?.error && <FieldError>{state.error}</FieldError>}
+    </div>
   )
 }
 

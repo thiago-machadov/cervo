@@ -140,7 +140,7 @@ async function SubscriptionContent({ searchParams }: Pick<PageProps<"/assinatura
         {[
           ["Posso cancelar quando quiser?", "Sim. Em “Gerenciar assinatura” você cancela em dois toques e continua Pro até o fim do período já pago."],
           [
-            "E se eu cancelar estando em mais de 2 clubes?",
+            `E se eu cancelar estando em mais de ${FREE_CLUB_LIMIT} clubes?`,
             "Você continua em todos os clubes. Só não entra em clubes novos enquanto estiver acima do limite do plano grátis.",
           ],
           ["Como é o pagamento?", "Pelo Stripe, com cartão de crédito, Apple Pay ou Google Pay. O Cervo não vê nem guarda os dados do seu cartão."],

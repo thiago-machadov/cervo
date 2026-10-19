@@ -17,6 +17,7 @@ const items = [
 /** Telas internas que pertencem a uma aba (ex.: /amigos fica sob Feed, /feedback sob Perfil). */
 const SECTION_PATHS: Record<string, string[]> = {
   "/feed": ["/amigos", "/pessoas", "/checkin"],
+  "/clubes": ["/convite"],
   "/perfil": ["/feedback", "/instalar", "/conta", "/assinatura", "/estatisticas"],
 }
 

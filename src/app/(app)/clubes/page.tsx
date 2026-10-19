@@ -65,7 +65,7 @@ async function ClubsContent() {
           {clubs.map((club) => (
             <li key={club.id}>
               <Link href={`/clubes/${club.id}`} className="flex items-center gap-4 rounded-2xl bg-card p-3 ring-1 ring-border/60 transition-transform active:scale-[0.99]">
-                <ClubTile name={club.name} className="w-16" />
+                <ClubTile decorative name={club.name} className="w-16" />
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="font-display line-clamp-2 text-lg font-bold text-primary">{club.name}</p>
                   <p className="truncate text-sm text-muted-foreground">

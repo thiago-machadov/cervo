@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr"
+import { CheckIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr"
 import { ClubTile } from "@/components/book-cover"
 import { DoodleEmpty } from "@/components/doodle-empty"
 import { EyeDoodle } from "@/components/doodles"
@@ -52,11 +52,12 @@ async function ExploreContent({ searchParams }: Pick<PageProps<"/clubes/explorar
   const user = await getCurrentUser()
   const clubs = await searchPublicClubs(filters, user.id)
 
-  const chips = [
+  const sorts = [
     { label: "Mais membros", active: filters.ordem === "membros", href: hrefWith(filters, { ordem: "membros" }) },
     { label: "Mais recentes", active: filters.ordem === "recentes", href: hrefWith(filters, { ordem: "recentes" }) },
-    { label: "Com vagas", active: Boolean(filters.vagas), href: hrefWith(filters, { vagas: !filters.vagas }) },
   ]
+  const hasFilters = Boolean(filters.q || filters.vagas)
+  const chip = "inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-card px-4 text-sm font-medium ring-1 ring-border transition-colors"
 
   return (
     <div className="space-y-4 pt-2">
@@ -79,20 +80,28 @@ async function ExploreContent({ searchParams }: Pick<PageProps<"/clubes/explorar
         </label>
       </form>
 
-      <nav aria-label="Filtros" className="no-scrollbar flex gap-2 overflow-x-auto px-4">
-        {chips.map((chip) => (
+      {/* Ordenação (escolhe uma) separada do filtro (liga/desliga), com rótulos explícitos. */}
+      <nav aria-label="Ordenar e filtrar" className="no-scrollbar flex items-center gap-2 overflow-x-auto px-4">
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">Ordenar:</span>
+        {sorts.map((sort) => (
           <Link
-            key={chip.label}
-            href={chip.href}
-            aria-current={chip.active ? "true" : undefined}
-            className={cn(
-              "shrink-0 rounded-full bg-card px-4 py-2 text-sm font-medium ring-1 ring-border transition-colors",
-              chip.active && "bg-primary text-primary-foreground ring-primary"
-            )}
+            key={sort.label}
+            href={sort.href}
+            aria-current={sort.active ? "true" : undefined}
+            className={cn(chip, sort.active && "bg-primary text-primary-foreground ring-primary")}
           >
-            {chip.label}
+            {sort.label}
           </Link>
         ))}
+        <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-border" />
+        <Link
+          href={hrefWith(filters, { vagas: !filters.vagas })}
+          aria-pressed={Boolean(filters.vagas)}
+          role="button"
+          className={cn(chip, filters.vagas && "bg-secondary text-secondary-foreground ring-primary/40")}
+        >
+          {filters.vagas && <CheckIcon className="size-4" weight="bold" aria-hidden />} Só com vagas
+        </Link>
       </nav>
 
       {clubs.length === 0 ? (
@@ -100,32 +109,40 @@ async function ExploreContent({ searchParams }: Pick<PageProps<"/clubes/explorar
           doodle={<EyeDoodle className="w-28" />}
           title="Nenhum clube encontrado"
           description={
-            filters.q
-              ? "Tente outro nome, livro ou autor, ou tire o filtro de vagas."
-              : "Ainda não há clubes públicos. Que tal criar o primeiro?"
+            filters.q && filters.vagas
+              ? `Nenhum clube com vagas para “${filters.q}”. Tente outro termo ou desligue “Só com vagas”.`
+              : filters.q
+                ? `Nenhum clube público para “${filters.q}”. Tente outro nome, livro ou autor.`
+                : filters.vagas
+                  ? "Nenhum clube público com vagas agora."
+                  : "Ainda não há clubes públicos. Que tal criar o primeiro?"
           }
           action={
-            <Button render={<Link href="/clubes/novo" />} nativeButton={false}>
-              Criar clube
-            </Button>
+            <div className="flex flex-wrap justify-center gap-2">
+              {hasFilters && (
+                <Button variant="outline" render={<Link href="/clubes/explorar" />} nativeButton={false}>
+                  Limpar filtros
+                </Button>
+              )}
+              <Button render={<Link href="/clubes/novo" />} nativeButton={false}>
+                Criar clube
+              </Button>
+            </div>
           }
         />
       ) : (
         <ul className="grid gap-3 px-4 pb-4 md:grid-cols-2">
           {clubs.map((club) => (
             <li key={club.id} className="flex items-center gap-4 rounded-2xl bg-card p-3 ring-1 ring-border/60">
-              <ClubTile name={club.name} className="w-14" />
-              <div className="min-w-0 flex-1 space-y-0.5">
+              <ClubTile name={club.name} className="w-14" decorative />
+              <Link href={`/clubes/${club.id}`} className="min-w-0 flex-1 space-y-0.5">
                 <p className="font-display line-clamp-2 text-base font-bold text-primary">{club.name}</p>
                 <p className="truncate text-sm text-muted-foreground">
-                  {club.readingMode === "FREE"
-                    ? "Leitura livre: cada um lê o seu"
-                    : club.book
-                      ? `Lendo ${club.book.title}`
-                      : (club.description ?? "Sem livro definido")}
+                  {club.readingMode === "FREE" ? "Leitura livre: cada um lê o seu" : club.book ? `Lendo ${club.book.title}` : "Sem livro definido"}
                 </p>
+                {club.description && <p className="line-clamp-2 text-xs text-muted-foreground">{club.description}</p>}
                 <p className="text-xs text-muted-foreground">{clubMembersLabel(club.memberCount, club.maxMembers)}</p>
-              </div>
+              </Link>
               {club.isMember ? (
                 <Button size="sm" variant="outline" render={<Link href={`/clubes/${club.id}`} />} nativeButton={false}>
                   Abrir

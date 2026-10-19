@@ -6,6 +6,7 @@ import { BookCover } from "@/components/book-cover"
 import { CoverPicker } from "@/components/cover-picker"
 import { BirdDoodle, BookDoodle, EnvelopeDoodle, FlockDoodle, SunDoodle } from "@/components/doodles"
 import { GoalPicker } from "@/components/goal-picker"
+import { useConfirm } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -44,21 +45,17 @@ export function OnboardingWizard({ initialStep, firstName, goal, book, inviteLin
             Passo {Math.min(step + 1, steps.length)} de {steps.length}
           </span>
           {step > 0 ? (
-            <button type="button" onClick={() => setStep(step - 1)} className="text-primary">
+            <Button variant="ghost" size="sm" className="-mr-3 min-h-11 px-3 text-primary" onClick={() => setStep(step - 1)}>
               Voltar
-            </button>
+            </Button>
           ) : (
-            <form action={signOut}>
-              <button type="submit" className="text-muted-foreground">
-                Sair
-              </button>
-            </form>
+            <SignOutButton />
           )}
         </div>
       </div>
 
       {step === 0 && <GoalStep firstName={firstName} goal={goal} onDone={() => setStep(1)} />}
-      {step === 1 && <BookStep onDone={() => setStep(2)} />}
+      {step === 1 && <BookStep inviteFlow={Boolean(inviteLink)} onDone={() => setStep(2)} />}
       {step === 2 &&
         (inviteLink ? (
           <JoinInviteStep inviteLink={inviteLink} book={book} next={next} />
@@ -66,6 +63,32 @@ export function OnboardingWizard({ initialStep, firstName, goal, book, inviteLin
           <ClubStep book={book} inviteLink={inviteLink} next={next} />
         ))}
     </div>
+  )
+}
+
+/** Sair da conta no onboarding: confirma antes, para não perder o progresso com um toque sem querer. */
+function SignOutButton() {
+  const confirm = useConfirm()
+  const formRef = useRef<HTMLFormElement>(null)
+  return (
+    <form ref={formRef} action={signOut}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="-mr-3 min-h-11 px-3 text-muted-foreground"
+        onClick={async () => {
+          const ok = await confirm({
+            title: "Sair da conta?",
+            description: "Você pode continuar daqui quando entrar de novo.",
+            confirmLabel: "Sair",
+          })
+          if (ok) formRef.current?.requestSubmit()
+        }}
+      >
+        Sair da conta
+      </Button>
+    </form>
   )
 }
 
@@ -80,11 +103,16 @@ function StepTitle({
   description: string
   doodle: React.ReactNode
 }) {
+  // A cada passo, o foco vai para o título: leitores de tela anunciam a nova etapa.
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => headingRef.current?.focus(), [])
   return (
     <div className="relative mt-6 mb-8 space-y-3">
       <div className="flex h-20 items-end">{doodle}</div>
       <p className="text-xs font-bold tracking-widest text-primary uppercase">{eyebrow}</p>
-      <h1 className="font-display text-4xl font-bold text-primary">{title}</h1>
+      <h1 ref={headingRef} tabIndex={-1} className="font-display text-4xl font-bold text-primary outline-none">
+        {title}
+      </h1>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>
   )
@@ -115,7 +143,7 @@ function GoalStep({ firstName, goal, onDone }: { firstName: string; goal: Props[
   )
 }
 
-function BookStep({ onDone }: { onDone: () => void }) {
+function BookStep({ inviteFlow, onDone }: { inviteFlow: boolean; onDone: () => void }) {
   const [state, action, pending] = useStepAction(saveFirstBook, onDone)
   return (
     <form action={action} className="flex flex-1 flex-col">
@@ -151,6 +179,10 @@ function BookStep({ onDone }: { onDone: () => void }) {
         {state?.error && <FieldError>{state.error}</FieldError>}
       </FieldGroup>
       <StepButton pending={pending}>Adicionar livro</StepButton>
+      {/* Livro é opcional: quem entra por convite lê o livro do clube, que entra na estante sozinho. */}
+      <Button type="button" variant="ghost" className="mt-2 h-11 w-full" onClick={onDone}>
+        {inviteFlow ? "Pular, vou ler o livro do clube" : "Pular por agora"}
+      </Button>
     </form>
   )
 }

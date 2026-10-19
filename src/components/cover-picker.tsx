@@ -88,7 +88,7 @@ export function CoverPicker({
                 type="button"
                 onClick={clear}
                 aria-label="Remover foto"
-                className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-foreground/70 text-background"
+                className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-foreground/70 text-background after:absolute after:-inset-3 after:content-['']"
               >
                 <XIcon className="size-3" weight="bold" />
               </button>

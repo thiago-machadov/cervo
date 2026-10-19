@@ -46,6 +46,7 @@ export function CreateChallengeButton({ clubId, today }: { clubId: string; today
 
 function ChallengeForm({ clubId, today, onDone }: { clubId: string; today: string; onDone: () => void }) {
   const [state, action, pending] = useActionState(createChallenge, undefined)
+  const v = state?.values
 
   useEffect(() => {
     if (state?.ok) {
@@ -60,21 +61,21 @@ function ChallengeForm({ clubId, today, onDone }: { clubId: string; today: strin
       <FieldGroup className="px-4">
         <Field>
           <FieldLabel htmlFor="challenge-title">Nome</FieldLabel>
-          <Input id="challenge-title" name="title" defaultValue="Desafio de 30 dias" maxLength={60} required className="h-11" />
+          <Input id="challenge-title" name="title" defaultValue={v?.title ?? "Desafio de 30 dias"} maxLength={60} required className="h-11" />
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field>
             <FieldLabel htmlFor="challenge-start">Começa em</FieldLabel>
-            <Input id="challenge-start" name="startsOn" type="date" defaultValue={today} required className="h-11" />
+            <Input id="challenge-start" name="startsOn" type="date" defaultValue={v?.startsOn ?? today} required className="h-11" />
           </Field>
           <Field>
             <FieldLabel htmlFor="challenge-end">Termina em</FieldLabel>
-            <Input id="challenge-end" name="endsOn" type="date" defaultValue={addDays(today, 29)} required className="h-11" />
+            <Input id="challenge-end" name="endsOn" type="date" defaultValue={v?.endsOn ?? addDays(today, 29)} required className="h-11" />
           </Field>
         </div>
         <Field>
           <FieldLabel htmlFor="challenge-days">Meta: dias com leitura</FieldLabel>
-          <Input id="challenge-days" name="targetDays" type="number" inputMode="numeric" min={1} max={366} defaultValue={25} required className="h-11" />
+          <Input id="challenge-days" name="targetDays" type="number" inputMode="numeric" min={1} max={366} defaultValue={v?.targetDays ?? 25} required className="h-11" />
         </Field>
         {state?.error && <FieldError>{state.error}</FieldError>}
       </FieldGroup>

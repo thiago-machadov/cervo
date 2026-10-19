@@ -69,7 +69,7 @@ function ProfileLink({ userId }: { userId: string }) {
           {copied ? <CheckIcon weight="bold" /> : <CopyIcon />} {copied ? "Copiado" : "Copiar"}
         </Button>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className={canShare ? "grid grid-cols-2 gap-2" : "grid gap-2"}>
         <Button
           variant="outline"
           className="h-11"
@@ -78,9 +78,11 @@ function ProfileLink({ userId }: { userId: string }) {
         >
           <WhatsappLogoIcon className="size-5" /> WhatsApp
         </Button>
-        <Button variant="outline" className="h-11" onClick={share} disabled={!canShare}>
-          <ShareNetworkIcon className="size-5" /> Compartilhar
-        </Button>
+        {canShare && (
+          <Button variant="outline" className="h-11" onClick={share} disabled={false}>
+            <ShareNetworkIcon className="size-5" /> Compartilhar
+          </Button>
+        )}
       </div>
     </div>
   )

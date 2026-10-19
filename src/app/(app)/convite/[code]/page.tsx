@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { BookCover } from "@/components/book-cover"
 import { BirdDoodle, SpiralClusterDoodle, StampFrame, StarDoodle } from "@/components/doodles"
 import { PageSuspense } from "@/components/page-suspense"
@@ -7,11 +8,12 @@ import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
 import { joinClub } from "@/app/actions/clubs"
 import { UpgradeCard } from "@/components/upgrade-card"
-import { getCurrentUser } from "@/lib/auth"
+import { getSessionUser } from "@/lib/auth"
 import { clubMembersLabel } from "@/lib/clubs"
 import { db } from "@/lib/db"
 import { FREE_CLUB_LIMIT, remainingClubSlots } from "@/lib/plan"
 import { getInvite } from "@/lib/queries"
+import { withNext } from "@/lib/redirects"
 
 export const metadata: Metadata = { title: "Convite" }
 
@@ -25,7 +27,9 @@ export default function InvitePage({ params }: PageProps<"/convite/[code]">) {
 
 async function InviteContent({ params }: Pick<PageProps<"/convite/[code]">, "params">) {
   const { code } = await params
-  const user = await getCurrentUser()
+  // Sem onboarding concluído: termina o onboarding e volta para este convite (não perde o clube).
+  const user = await getSessionUser()
+  if (!user.onboardedAt) redirect(withNext("/onboarding", `/convite/${code}`))
   const invite = await getInvite(code)
   const expired = !invite || (invite.expiresAt !== null && invite.expiresAt < new Date())
 

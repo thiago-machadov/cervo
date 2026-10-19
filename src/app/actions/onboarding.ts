@@ -74,8 +74,8 @@ export async function finishOnboarding(_prev: ActionState, formData: FormData): 
     where: { id: userId },
     select: { dailyGoal: true, library: { where: { status: "READING" }, orderBy: { createdAt: "desc" }, take: 1 } },
   })
-  // Meta e primeiro livro são obrigatórios: não deixa concluir pulando etapas pela URL.
-  if (!user?.dailyGoal || user.library.length === 0) return { error: "Complete os passos anteriores primeiro" }
+  // A meta é obrigatória (o livro pode ser pulado): não deixa concluir pulando etapas pela URL.
+  if (!user?.dailyGoal) return { error: "Defina sua meta diária primeiro" }
 
   const parsed = finishSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0]?.message }
@@ -89,13 +89,14 @@ export async function finishOnboarding(_prev: ActionState, formData: FormData): 
     destination = `/clubes/${result.clubId}`
   } else if (input.mode === "create") {
     if ((await remainingClubSlots(userId)) === 0) return { error: CLUB_LIMIT_MESSAGE }
-    const bookId = user.library[0]!.bookId
+    // Sem livro (passo pulado), o clube nasce sem livro definido; o dono escolhe depois.
+    const bookId = user.library[0]?.bookId ?? null
     const club = await db.club.create({
       data: {
         name: input.clubName,
         ownerId: userId,
         bookId,
-        bookStartedAt: new Date(),
+        bookStartedAt: bookId ? new Date() : null,
         members: { create: { userId, role: "OWNER" } },
       },
     })

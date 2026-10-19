@@ -19,7 +19,13 @@ const KINDS: { value: Kind; icon: Icon; label: string; placeholder: string }[] =
   { value: "OTHER", icon: ChatTextIcon, label: "Outro assunto", placeholder: "Pode falar à vontade." },
 ]
 
+/** O `key` remonta o formulário em "Mandar outro" (zera o estado sem recarregar a página). */
 export function FeedbackForm() {
+  const [round, setRound] = useState(0)
+  return <FeedbackFormInner key={round} onAnother={() => setRound((n) => n + 1)} />
+}
+
+function FeedbackFormInner({ onAnother }: { onAnother: () => void }) {
   const [state, action, pending] = useActionState(sendFeedback, undefined)
   const [kind, setKind] = useState<Kind>("IDEA")
   const current = KINDS.find((k) => k.value === kind)!
@@ -30,7 +36,7 @@ export function FeedbackForm() {
         <FlockDoodle className="w-40" />
         <p className="font-display text-2xl font-bold text-primary uppercase">Valeu!</p>
         <p className="text-sm text-muted-foreground">Recebemos seu feedback. Cada mensagem é lida.</p>
-        <Button variant="outline" className="h-11" onClick={() => window.location.reload()}>
+        <Button variant="outline" className="h-11" onClick={onAnother}>
           Mandar outro
         </Button>
       </div>

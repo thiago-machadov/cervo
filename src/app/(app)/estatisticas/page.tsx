@@ -152,12 +152,23 @@ async function StatsContent({ searchParams }: Pick<PageProps<"/estatisticas">, "
             <div className="flex h-40 items-end gap-1.5 rounded-2xl bg-card p-4 ring-1 ring-border/60">
               {stats.pagesByMonth.map((pages, i) => (
                 <div key={MONTHS[i]} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
+                  {/* Valor visível (sem depender de passar o mouse) e lido pelo leitor de tela. */}
+                  {pages > 0 && (
+                    <span aria-hidden className="text-[0.55rem] font-semibold text-primary tabular-nums">
+                      {pages}
+                    </span>
+                  )}
                   <div
+                    aria-hidden
                     className="w-full rounded-t bg-primary"
                     style={{ height: `${(pages / maxMonth) * 100}%`, minHeight: pages > 0 ? 3 : 0 }}
-                    title={`${MONTHS[i]}: ${pages} páginas`}
                   />
-                  <span className="text-[0.6rem] text-muted-foreground">{MONTHS[i]}</span>
+                  <span aria-hidden className="text-[0.6rem] text-muted-foreground">
+                    {MONTHS[i]}
+                  </span>
+                  <span className="sr-only">
+                    {MONTHS[i]}: {pages} páginas
+                  </span>
                 </div>
               ))}
             </div>
@@ -183,20 +194,32 @@ async function StatsContent({ searchParams }: Pick<PageProps<"/estatisticas">, "
               <FlameDoodle className="w-4" /> Calendário de leitura
             </h2>
             <div className="overflow-x-auto rounded-2xl bg-card p-4 ring-1 ring-border/60">
-              <div className="flex w-max gap-1">
+              <div
+                className="flex w-max gap-1"
+                role="img"
+                aria-label={`Calendário dos últimos 6 meses: ${stats.calendar.flat().filter((c) => c.pages > 0).length} dias com leitura`}
+              >
                 {stats.calendar.map((week) => (
                   <div key={week[0]!.day} className="flex flex-col gap-1">
                     {week.map((cell) => (
                       <span
                         key={cell.day}
-                        title={cell.pages >= 0 ? `${formatDay(cell.day)}: ${cell.pages} páginas` : undefined}
-                        className={cn("size-3 rounded-[3px]", heat(cell.pages))}
+                                                className={cn("size-3 rounded-[3px]", heat(cell.pages))}
                       />
                     ))}
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">Últimos 6 meses. Quanto mais escuro, mais páginas no dia.</p>
+              <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>Últimos 6 meses</span>
+                <span className="flex items-center gap-1" aria-hidden>
+                  Menos
+                  {[0, 5, 20, 40].map((p) => (
+                    <span key={p} className={cn("size-3 rounded-[3px]", heat(p))} />
+                  ))}
+                  Mais páginas
+                </span>
+              </div>
             </div>
           </section>
 

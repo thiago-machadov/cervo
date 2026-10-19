@@ -1,6 +1,7 @@
 "use client"
 
 import { useActionState, useState } from "react"
+import Link from "next/link"
 import { BookBookmarkIcon, BooksIcon, GlobeHemisphereWestIcon, LockSimpleIcon } from "@phosphor-icons/react/dist/ssr"
 import type { Icon } from "@phosphor-icons/react/lib"
 import { Button } from "@/components/ui/button"
@@ -57,7 +58,10 @@ function OptionCards<T extends string>({
                 selected && "ring-2 ring-primary"
               )}
             >
-              <OptionIcon className={cn("size-6 text-muted-foreground", selected && "text-primary")} weight={selected ? "fill" : "regular"} />
+              <OptionIcon
+                className={cn("size-6 text-muted-foreground", selected && "text-primary")}
+                weight={selected ? "fill" : "regular"}
+              />
               <span className="text-sm font-semibold">{title}</span>
               <span className="text-xs text-muted-foreground">{description}</span>
             </button>
@@ -80,17 +84,29 @@ const VISIBILITY_OPTIONS = [
 
 const NO_BOOK = ""
 
-export function ClubForm({
-  books,
-  club,
-}: {
-  books: { id: string; title: string }[]
-  club?: ClubDefaults
-}) {
+/** No cadastro, opções avançadas ficam recolhidas (menos decisões de uma vez); na edição, abertas. */
+function AdvancedOptions({ open, children }: { open: boolean; children: React.ReactNode }) {
+  if (open) return <div className="space-y-6">{children}</div>
+  return (
+    <details className="group space-y-6 rounded-2xl ring-1 ring-border/60 [&[open]]:p-4">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-2xl px-4 text-sm font-semibold group-open:-mx-4 group-open:-mt-4 marker:hidden">
+        Mais opções (limite de membros e meta)
+        <span aria-hidden className="text-muted-foreground transition-transform group-open:rotate-180">
+          ⌄
+        </span>
+      </summary>
+      {children}
+    </details>
+  )
+}
+
+export function ClubForm({ books, club }: { books: { id: string; title: string }[]; club?: ClubDefaults }) {
   const [state, action, pending] = useActionState(club ? updateClub : createClub, undefined)
   const [visibility, setVisibility] = useState<"PRIVATE" | "PUBLIC">(club?.visibility ?? "PRIVATE")
   const [readingMode, setReadingMode] = useState<"FIXED" | "FREE">(club?.readingMode ?? "FIXED")
   const fixedBook = readingMode === "FIXED"
+  // Depois de um erro do servidor, os campos voltam com o que a pessoa tinha digitado.
+  const v = state?.values
   const bookItems = [{ value: NO_BOOK, label: "Escolher depois" }, ...books.map((b) => ({ value: b.id, label: b.title }))]
 
   return (
@@ -99,11 +115,18 @@ export function ClubForm({
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="name">Nome do clube</FieldLabel>
-          <Input id="name" name="name" defaultValue={club?.name} placeholder="Ex.: Leitores da firma" required className="h-11" />
+          <Input
+            id="name"
+            name="name"
+            defaultValue={v?.name ?? club?.name}
+            placeholder="Ex.: Leitores da firma"
+            required
+            className="h-11"
+          />
         </Field>
         <Field>
           <FieldLabel htmlFor="description">Descrição (opcional)</FieldLabel>
-          <Textarea id="description" name="description" defaultValue={club?.description ?? ""} rows={2} maxLength={500} />
+          <Textarea id="description" name="description" defaultValue={v?.description ?? club?.description ?? ""} rows={2} maxLength={500} />
         </Field>
       </FieldGroup>
 
@@ -112,9 +135,9 @@ export function ClubForm({
         <OptionCards name="readingMode" label="Modo de leitura" value={readingMode} onChange={setReadingMode} options={READING_OPTIONS} />
         {fixedBook && (
           <Field>
-            <FieldLabel>Livro do clube</FieldLabel>
-            <Select name="bookId" defaultValue={club?.bookId ?? NO_BOOK} items={bookItems}>
-              <SelectTrigger className="h-11 w-full">
+            <FieldLabel htmlFor="bookId">Livro do clube</FieldLabel>
+            <Select name="bookId" defaultValue={v?.bookId ?? club?.bookId ?? NO_BOOK} items={bookItems}>
+              <SelectTrigger id="bookId" className="h-11 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -126,9 +149,14 @@ export function ClubForm({
               </SelectContent>
             </Select>
             <FieldDescription>
-              {books.length === 0
-                ? "Adicione livros à sua biblioteca para escolher o livro do clube."
-                : "O livro entra na biblioteca de todos os membros."}
+              {books.length === 0 ? (
+                <>
+                  Sua biblioteca está vazia. <Link href="/biblioteca">Adicione um livro</Link> para escolher o livro do clube (ou escolha
+                  depois).
+                </>
+              ) : (
+                "O livro entra na biblioteca de todos os membros."
+              )}
             </FieldDescription>
           </Field>
         )}
@@ -136,52 +164,70 @@ export function ClubForm({
 
       <FieldSet>
         <FieldLegend>Quem pode entrar</FieldLegend>
-        <OptionCards name="visibility" label="Visibilidade do clube" value={visibility} onChange={setVisibility} options={VISIBILITY_OPTIONS} />
-        <Field>
-          <FieldLabel htmlFor="maxMembers">Limite de membros (opcional)</FieldLabel>
-          <Input
-            id="maxMembers"
-            name="maxMembers"
-            type="number"
-            inputMode="numeric"
-            min={2}
-            max={1000}
-            placeholder="Sem limite"
-            defaultValue={club?.maxMembers ?? ""}
-            className="h-11"
-          />
-          <FieldDescription>Quando lotar, ninguém mais entra, nem por convite.</FieldDescription>
-        </Field>
+        <OptionCards
+          name="visibility"
+          label="Visibilidade do clube"
+          value={visibility}
+          onChange={setVisibility}
+          options={VISIBILITY_OPTIONS}
+        />
       </FieldSet>
 
-      <FieldSet>
-        <FieldLegend>Meta de leitura</FieldLegend>
-        <FieldDescription>
-          {fixedBook
-            ? "Opcional. Use uma data final, um ritmo semanal, ou os dois."
-            : "Opcional. Quantas páginas cada membro deve ler por semana, em qualquer livro."}
-        </FieldDescription>
-        <FieldGroup className="grid grid-cols-2 gap-4">
-          {fixedBook && (
-            <Field>
-              <FieldLabel htmlFor="goalEndDate">Terminar até</FieldLabel>
-              <Input id="goalEndDate" name="goalEndDate" type="date" defaultValue={club?.goalEndDate ?? ""} className="h-11" />
-            </Field>
-          )}
+      <AdvancedOptions open={Boolean(club)}>
+        <FieldSet>
+          <FieldLegend>Limite de membros</FieldLegend>
           <Field>
-            <FieldLabel htmlFor="weeklyPages">Págs. por semana</FieldLabel>
+            <FieldLabel htmlFor="maxMembers">Máximo de pessoas (opcional)</FieldLabel>
             <Input
-              id="weeklyPages"
-              name="weeklyPages"
+              id="maxMembers"
+              name="maxMembers"
               type="number"
               inputMode="numeric"
-              min={1}
-              defaultValue={club?.weeklyPages ?? ""}
+              min={2}
+              max={1000}
+              placeholder="Sem limite"
+              defaultValue={v?.maxMembers ?? club?.maxMembers ?? ""}
               className="h-11"
             />
+            <FieldDescription>Quando lotar, ninguém mais entra, nem por convite.</FieldDescription>
           </Field>
-        </FieldGroup>
-      </FieldSet>
+        </FieldSet>
+
+        <FieldSet>
+          <FieldLegend>Meta de leitura</FieldLegend>
+          <FieldDescription>
+            {fixedBook
+              ? "Opcional. Use uma data final, um ritmo semanal, ou os dois."
+              : "Opcional. Quantas páginas cada membro deve ler por semana, em qualquer livro."}
+          </FieldDescription>
+          <FieldGroup className="grid grid-cols-2 gap-4">
+            {fixedBook && (
+              <Field>
+                <FieldLabel htmlFor="goalEndDate">Terminar até</FieldLabel>
+                <Input
+                  id="goalEndDate"
+                  name="goalEndDate"
+                  type="date"
+                  defaultValue={v?.goalEndDate ?? club?.goalEndDate ?? ""}
+                  className="h-11"
+                />
+              </Field>
+            )}
+            <Field>
+              <FieldLabel htmlFor="weeklyPages">Págs. por semana</FieldLabel>
+              <Input
+                id="weeklyPages"
+                name="weeklyPages"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                defaultValue={v?.weeklyPages ?? club?.weeklyPages ?? ""}
+                className="h-11"
+              />
+            </Field>
+          </FieldGroup>
+        </FieldSet>
+      </AdvancedOptions>
 
       {state?.error && <FieldError>{state.error}</FieldError>}
 

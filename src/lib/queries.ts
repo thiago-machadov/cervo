@@ -78,7 +78,10 @@ async function circleUserIds(userId: string) {
 }
 
 /** Feed: check-ins de quem divide clube com o usuário e dos amigos; com `clubId`, só dos membros daquele clube. */
-export async function getHomeFeed(userId: string, clubId?: string) {
+export const FEED_PAGE_SIZE = 30
+
+/** `before`: só check-ins anteriores a esta data (página seguinte do feed). */
+export async function getHomeFeed(userId: string, clubId?: string, before?: Date) {
   const ids = clubId
     ? (
         await db.clubMember.findMany({
@@ -88,10 +91,10 @@ export async function getHomeFeed(userId: string, clubId?: string) {
       ).map((m) => m.userId)
     : await circleUserIds(userId)
   return db.checkIn.findMany({
-    where: { userId: { in: ids } },
+    where: { userId: { in: ids }, ...(before ? { createdAt: { lt: before } } : {}) },
     include: feedInclude,
     orderBy: { createdAt: "desc" },
-    take: 30,
+    take: FEED_PAGE_SIZE,
   })
 }
 

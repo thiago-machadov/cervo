@@ -23,7 +23,7 @@ export function FriendButton({
 }) {
   const [pending, startTransition] = useTransition()
   const confirm = useConfirm()
-  const height = size === "sm" ? "h-9" : "h-11"
+  const height = size === "sm" ? "h-10 pointer-coarse:h-11" : "h-11"
 
   function run(action: () => Promise<FriendActionResult>) {
     startTransition(async () => {

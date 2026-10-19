@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ClubForm } from "@/components/club-form"
+import { DeleteClubButton } from "@/components/leave-club-button"
 import { PageHeader } from "@/components/page-header"
 import { PageSuspense } from "@/components/page-suspense"
 import { getCurrentUser } from "@/lib/auth"
@@ -46,6 +47,13 @@ async function EditClubContent({ params }: Pick<PageProps<"/clubes/[id]/editar">
           }}
         />
       </div>
+      {club.ownerId === user.id && (
+        <section className="mx-4 mb-8 space-y-3 rounded-2xl border border-destructive/40 p-4">
+          <h2 className="font-semibold">Zona de perigo</h2>
+          <p className="text-sm text-muted-foreground">Apagar o clube remove o ranking, os desafios e o histórico para todos os membros.</p>
+          <DeleteClubButton clubId={club.id} />
+        </section>
+      )}
     </main>
   )
 }

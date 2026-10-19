@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { useActionState, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { CoverPicker } from "@/components/cover-picker"
@@ -18,6 +17,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { AddBookDrawer } from "@/components/add-book-drawer"
 import { createCheckIn } from "@/app/actions/checkins"
 import type { CheckInOption } from "@/lib/queries"
 
@@ -46,9 +46,7 @@ export function CheckInDrawer({
           {options.length === 0 ? (
             <div className="space-y-4 p-4 pt-0 text-sm text-muted-foreground">
               <p>Adicione um livro à sua biblioteca para registrar a leitura.</p>
-              <Button className="w-full" render={<Link href="/biblioteca" />} nativeButton={false}>
-                Ir para a biblioteca
-              </Button>
+              <AddBookDrawer defaultStatus="READING" label="Adicionar o livro que estou lendo" full />
             </div>
           ) : (
             // Montar só quando aberto reinicia o formulário (e o estado da action) a cada abertura.
@@ -130,7 +128,7 @@ function CheckInForm({
             inputMode="numeric"
             min={selected.currentPage + 1}
             max={selected.totalPages}
-            placeholder={String(Math.min(selected.currentPage + 10, selected.totalPages))}
+            placeholder={`ex.: ${Math.min(selected.currentPage + 10, selected.totalPages)}`}
             required
             className="h-11 text-lg"
           />

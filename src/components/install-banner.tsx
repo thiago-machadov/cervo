@@ -40,7 +40,7 @@ export function InstallBanner() {
         <span className="font-semibold">Instale o Cervo no celular</span>
         <span className="block text-xs opacity-80">Abra direto da tela inicial, como um app.</span>
       </Link>
-      <button type="button" onClick={dismiss} aria-label="Dispensar" className="rounded-full p-1.5 hover:bg-card/60">
+      <button type="button" onClick={dismiss} aria-label="Dispensar" className="-m-2 flex size-11 shrink-0 items-center justify-center rounded-full hover:bg-card/60">
         <XIcon className="size-4" />
       </button>
     </div>

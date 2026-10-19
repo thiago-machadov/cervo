@@ -8,6 +8,8 @@ import { BookDoodle, SpiralDoodle } from "@/components/doodles"
 import { PageHeader } from "@/components/page-header"
 import { PageSuspense } from "@/components/page-suspense"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentUser } from "@/lib/auth"
 import { getLibrary } from "@/lib/queries"
@@ -17,29 +19,60 @@ export const metadata: Metadata = { title: "Biblioteca" }
 
 const sections = ["READING", "WANT", "DONE"] as const
 
-export default function LibraryPage() {
+/** Acima disso a estante ganha busca por título ou autor. */
+const SEARCH_FROM = 12
+
+export default function LibraryPage({ searchParams }: PageProps<"/biblioteca">) {
   return (
     <PageSuspense>
-      <LibraryContent />
+      <LibraryContent searchParams={searchParams} />
     </PageSuspense>
   )
 }
 
-async function LibraryContent() {
+async function LibraryContent({ searchParams }: Pick<PageProps<"/biblioteca">, "searchParams">) {
   const user = await getCurrentUser()
-  const items = await getLibrary(user.id)
+  const { q } = await searchParams
+  const query = typeof q === "string" ? q.trim() : ""
+  const allItems = await getLibrary(user.id)
+  const needle = query.toLocaleLowerCase("pt-BR")
+  const items = needle
+    ? allItems.filter((item) => `${item.book.title} ${item.book.author}`.toLocaleLowerCase("pt-BR").includes(needle))
+    : allItems
   const firstWithBooks = sections.find((status) => items.some((item) => item.status === status)) ?? "READING"
 
   return (
     <main>
-      <PageHeader title="Biblioteca" subtitle={`${items.length} ${items.length === 1 ? "livro" : "livros"}`} action={<AddBookDrawer />} />
+      <PageHeader title="Biblioteca" subtitle={`${allItems.length} ${allItems.length === 1 ? "livro" : "livros"}`} action={<AddBookDrawer />} />
 
-      {items.length === 0 ? (
+      {allItems.length > SEARCH_FROM && (
+        <form role="search" className="mx-4 mb-4 flex gap-2">
+          <Input
+            type="search"
+            name="q"
+            defaultValue={query}
+            placeholder="Buscar por título ou autor"
+            aria-label="Buscar na biblioteca"
+            enterKeyHint="search"
+            className="h-11"
+          />
+          {query && (
+            <Button variant="ghost" className="h-11" render={<Link href="/biblioteca" />} nativeButton={false}>
+              Limpar
+            </Button>
+          )}
+        </form>
+      )}
+
+      {query && items.length === 0 ? (
+        <p className="px-5 py-10 text-center text-sm text-muted-foreground">Nenhum livro com “{query}” na sua estante.</p>
+      ) : allItems.length === 0 ? (
         <DoodleEmpty
           className="mt-2"
           doodle={<BookDoodle className="w-36" />}
           title="Estante vazia"
           description="Adicione o livro que você está lendo para começar a registrar seu progresso."
+          action={<AddBookDrawer defaultStatus="READING" label="Adicionar o livro que estou lendo" />}
         />
       ) : (
         <Tabs defaultValue={firstWithBooks} className="gap-4">
@@ -47,6 +80,7 @@ async function LibraryContent() {
             {sections.map((status) => (
               <TabsTrigger key={status} value={status}>
                 {STATUS_LABEL[status]}
+                <span className="text-xs opacity-60 tabular-nums">{items.filter((item) => item.status === status).length}</span>
               </TabsTrigger>
             ))}
           </TabsList>

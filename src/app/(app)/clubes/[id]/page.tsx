@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { notFound } from "next/navigation"
 import { DownloadSimpleIcon, LockSimpleIcon, PencilSimpleIcon, TargetIcon, TrophyIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover, ClubTile } from "@/components/book-cover"
 import { BooksDoodle, EyeDoodle, FlameDoodle, StarDoodle } from "@/components/doodles"
@@ -8,6 +7,8 @@ import { CreateChallengeButton } from "@/components/challenge-form"
 import { ClubChallenges } from "@/components/club-challenges"
 import { FeedList } from "@/components/feed-item"
 import { InviteButton } from "@/components/invite-button"
+import { WelcomeToast } from "@/components/welcome-toast"
+import { JoinClubButton } from "@/components/join-club-button"
 import { LeaveClubButton } from "@/components/leave-club-button"
 import { PageHeader } from "@/components/page-header"
 import { PageSuspense } from "@/components/page-suspense"
@@ -28,25 +29,24 @@ import { cn } from "@/lib/utils"
 export async function generateMetadata({ params }: PageProps<"/clubes/[id]">): Promise<Metadata> {
   const { id } = await params
   const userId = await getSessionUserId()
-  const club = userId
-    ? await db.club.findFirst({ where: { id, members: { some: { userId } } }, select: { name: true } })
-    : null
+  const club = userId ? await db.club.findFirst({ where: { id, members: { some: { userId } } }, select: { name: true } }) : null
   return { title: club?.name ?? "Clube" }
 }
 
-export default function ClubPage({ params }: PageProps<"/clubes/[id]">) {
+export default function ClubPage({ params, searchParams }: PageProps<"/clubes/[id]">) {
   return (
     <PageSuspense>
-      <ClubContent params={params} />
+      <ClubContent params={params} searchParams={searchParams} />
     </PageSuspense>
   )
 }
 
-async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">) {
+async function ClubContent({ params, searchParams }: PageProps<"/clubes/[id]">) {
   const { id } = await params
+  const { convidar, bemvindo } = await searchParams
   const user = await getCurrentUser()
   const data = await getClubDetail(id, user.id)
-  if (!data) notFound()
+  if (!data) return <ClubOutside clubId={id} />
 
   const { club, ranking, feed, freeReading, myWeekPages } = data
   const myRole = club.members.find((m) => m.userId === user.id)?.role ?? null
@@ -80,6 +80,14 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
       />
 
       {/* Desktop: informações e ações à esquerda, ranking e feed à direita. */}
+      {bemvindo === "1" && <WelcomeToast title={`Você entrou no ${club.name}!`} description="Faça um check-in para aparecer no ranking." />}
+      {club.members.length === 1 && canManage && convidar !== "1" && (
+        <div className="mx-4 mt-2 space-y-3 rounded-2xl bg-secondary p-4 text-secondary-foreground">
+          <p className="font-semibold">Clube pronto! Agora convide quem vai ler com você.</p>
+          <p className="text-sm">Clube do livro fica melhor com companhia: mande o link no grupo dos amigos.</p>
+          <InviteButton clubId={club.id} clubName={club.name} />
+        </div>
+      )}
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-start lg:gap-4">
         <div>
           <div className="space-y-4 p-4">
@@ -126,7 +134,14 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
                 </p>
                 <p className="text-sm">{club.weeklyPages} páginas por semana, em qualquer livro</p>
                 <div className="space-y-2">
-                  <div className="h-2 overflow-hidden rounded-full bg-card">
+                  <div
+                    className="h-2 overflow-hidden rounded-full bg-card"
+                    role="progressbar"
+                    aria-label="Progresso na meta semanal do clube"
+                    aria-valuemin={0}
+                    aria-valuemax={club.weeklyPages}
+                    aria-valuenow={Math.min(myWeekPages, club.weeklyPages)}
+                  >
                     <div
                       className="h-full rounded-full bg-primary"
                       style={{
@@ -186,15 +201,12 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
                   Clube lotado
                 </p>
               ) : (
-                <InviteButton clubId={club.id} clubName={club.name} />
+                <InviteButton clubId={club.id} clubName={club.name} defaultOpen={convidar === "1"} />
               )}
               <Button variant="outline" className="h-10 flex-1" render={<Link href={`/clubes/${club.id}/membros`} />} nativeButton={false}>
                 <UsersIcon /> Membros
               </Button>
             </div>
-          </div>
-          <div className="p-4 pt-0 lg:pt-2">
-            <LeaveClubButton clubId={club.id} isOwner={isOwner} heirName={heir?.user.name ?? null} />
           </div>
         </div>
 
@@ -232,7 +244,10 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
                         <p className="text-[0.65rem] text-muted-foreground">págs.</p>
                       </div>
                       {row.streak > 0 && (
-                        <span className="flex items-center gap-0.5 rounded-full bg-secondary px-1.5 py-0.5 text-xs font-semibold text-primary">
+                        <span
+                          aria-label={`Sequência de ${row.streak} ${row.streak === 1 ? "dia" : "dias"}`}
+                          className="flex items-center gap-0.5 rounded-full bg-secondary px-1.5 py-0.5 text-xs font-semibold text-primary"
+                        >
                           <FlameDoodle className="w-3" />
                           {row.streak}
                         </span>
@@ -274,6 +289,10 @@ async function ClubContent({ params }: Pick<PageProps<"/clubes/[id]">, "params">
               )}
             </TabsContent>
           </Tabs>
+          {/* Sair fica no fim, longe das ações do dia a dia (evita toque acidental ao rolar). */}
+          <div className="p-4">
+            <LeaveClubButton clubId={club.id} isOwner={isOwner} heirName={heir?.user.name ?? null} />
+          </div>
         </div>
       </div>
     </main>
@@ -284,7 +303,14 @@ function GoalProgress({ current, target, total }: { current: number; target: num
   const diff = current - target
   return (
     <div className="space-y-2">
-      <div className="relative h-2 rounded-full bg-card">
+      <div
+        className="relative h-2 rounded-full bg-card"
+        role="progressbar"
+        aria-label="Progresso no livro do clube"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={current}
+      >
         <div className="h-full rounded-full bg-primary" style={{ width: `${(current / total) * 100}%` }} />
         <div className="absolute -top-1 h-4 w-1 rounded-full bg-foreground" style={{ left: `${(target / total) * 100}%` }} aria-hidden />
       </div>
@@ -293,5 +319,81 @@ function GoalProgress({ current, target, total }: { current: number; target: num
         {diff >= 0 ? " — você está em dia! ✅" : ` — faltam ${-diff} páginas.`}
       </p>
     </div>
+  )
+}
+
+/**
+ * Quem não é membro: clube público mostra uma prévia com "Entrar"; privado (ou apagado)
+ * explica o motivo e oferece caminhos, em vez de uma "página perdida" genérica.
+ */
+async function ClubOutside({ clubId }: { clubId: string }) {
+  const club = await db.club.findUnique({
+    where: { id: clubId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      visibility: true,
+      maxMembers: true,
+      readingMode: true,
+      book: { select: { title: true, author: true, coverUrl: true } },
+      _count: { select: { members: true } },
+    },
+  })
+
+  if (club?.visibility === "PUBLIC") {
+    const full = club.maxMembers !== null && club._count.members >= club.maxMembers
+    return (
+      <main className="md:mx-auto md:max-w-2xl">
+        <PageHeader
+          title={club.name}
+          subtitle={clubMembersLabel(club._count.members, club.maxMembers, club.visibility)}
+          backHref="/clubes/explorar"
+        />
+        <div className="space-y-4 p-4">
+          <div className="flex items-center gap-3">
+            <ClubTile name={club.name} className="w-14" />
+            <p className="text-sm text-muted-foreground">{club.description ?? "Clube público do Cervo."}</p>
+          </div>
+          {club.readingMode === "FREE" ? (
+            <p className="rounded-2xl bg-card p-4 text-sm ring-1 ring-border/60">Leitura livre: cada um lê o livro que quiser.</p>
+          ) : club.book ? (
+            <div className="flex items-center gap-4 rounded-2xl bg-card p-4 ring-1 ring-border/60">
+              <BookCover title={club.book.title} coverUrl={club.book.coverUrl} className="w-14" />
+              <div className="min-w-0">
+                <p className="text-[0.7rem] font-semibold tracking-widest text-primary uppercase">Lendo agora</p>
+                <p className="font-bold">{club.book.title}</p>
+                <p className="text-sm text-muted-foreground">{club.book.author}</p>
+              </div>
+            </div>
+          ) : null}
+          {full ? (
+            <p className="rounded-2xl bg-muted p-4 text-center text-sm text-muted-foreground">Este clube está lotado.</p>
+          ) : (
+            <div className="flex justify-center">
+              <JoinClubButton clubId={club.id} />
+            </div>
+          )}
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="flex min-h-[70dvh] flex-col items-center justify-center gap-4 px-6 text-center">
+      <EyeDoodle className="w-28" />
+      <h1 className="font-display text-3xl font-bold text-primary uppercase">Clube fora do seu alcance</h1>
+      <p className="max-w-sm text-sm text-muted-foreground">
+        Você não faz parte deste clube, ou ele foi apagado. Clubes privados só aceitam quem tem um link de convite.
+      </p>
+      <div className="flex w-full max-w-xs flex-col gap-2">
+        <Button className="h-11" render={<Link href="/clubes" />} nativeButton={false}>
+          Ver meus clubes
+        </Button>
+        <Button variant="ghost" className="h-11" render={<Link href="/clubes/explorar" />} nativeButton={false}>
+          Explorar clubes públicos
+        </Button>
+      </div>
+    </main>
   )
 }

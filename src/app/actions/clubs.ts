@@ -18,7 +18,7 @@ import { db } from "@/lib/db"
 import { periodLength } from "@/lib/challenges"
 import { dayKey } from "@/lib/dates"
 import { isPro, remainingClubSlots } from "@/lib/plan"
-import type { ActionState } from "@/lib/utils-text"
+import { formValues, type ActionState } from "@/lib/utils-text"
 
 const optionalInt = z.preprocess(
   (v) => (v === "" || v == null ? undefined : v),
@@ -57,9 +57,9 @@ function goalDate(value?: string) {
 
 export async function createClub(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const userId = await requireUserId()
-  if ((await remainingClubSlots(userId)) === 0) return { error: CLUB_LIMIT_MESSAGE }
+  if ((await remainingClubSlots(userId)) === 0) return { error: CLUB_LIMIT_MESSAGE, values: formValues(formData) }
   const parsed = clubSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message }
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message, values: formValues(formData) }
 
   const { name, description, weeklyPages, visibility, maxMembers, readingMode } = parsed.data
   // Na leitura livre não existe livro do clube nem data final.
@@ -83,7 +83,7 @@ export async function createClub(_prev: ActionState, formData: FormData): Promis
   })
   if (bookId) await ensureReading(userId, bookId)
 
-  redirect(`/clubes/${club.id}`)
+  redirect(`/clubes/${club.id}?convidar=1`)
 }
 
 export async function updateClub(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -93,15 +93,18 @@ export async function updateClub(_prev: ActionState, formData: FormData): Promis
     where: { id: clubId, members: { some: { userId, role: { in: ["OWNER", "ADMIN"] } } } },
     include: { members: { select: { userId: true } } },
   })
-  if (!club) return { error: "Só o dono e os admins podem editar o clube" }
+  if (!club) return { error: "Só o dono e os admins podem editar o clube", values: formValues(formData) }
 
   const parsed = clubSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message }
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message, values: formValues(formData) }
 
   const { name, description, weeklyPages, visibility, maxMembers, readingMode } = parsed.data
   const goalEndDate = readingMode === "FIXED" ? parsed.data.goalEndDate : undefined
   if (maxMembers !== undefined && maxMembers < club.members.length) {
-    return { error: `O clube já tem ${club.members.length} membros; o limite não pode ser menor que isso` }
+    return {
+      error: `O clube já tem ${club.members.length} membros; o limite não pode ser menor que isso`,
+      values: formValues(formData),
+    }
   }
   const bookId = readingMode === "FIXED" ? ((await bookFromLibrary(userId, parsed.data.bookId)) ?? club.bookId) : null
   const modeChanged = readingMode !== club.readingMode
@@ -130,7 +133,7 @@ export async function updateClub(_prev: ActionState, formData: FormData): Promis
 }
 
 /** Gera (ou reaproveita) um convite válido e devolve o código. */
-export async function createInvite(clubId: string): Promise<{ code?: string; error?: string }> {
+export async function createInvite(clubId: string): Promise<{ code?: string; expiresAt?: string; error?: string }> {
   const userId = await requireUserId()
   const member = await db.clubMember.findUnique({ where: { clubId_userId: { clubId, userId } } })
   if (!member) return { error: "Você não faz parte deste clube" }
@@ -139,7 +142,7 @@ export async function createInvite(clubId: string): Promise<{ code?: string; err
     where: { clubId, createdById: userId, expiresAt: { gt: new Date(Date.now() + 24 * 60 * 60 * 1000) } },
     orderBy: { createdAt: "desc" },
   })
-  if (existing) return { code: existing.code }
+  if (existing) return { code: existing.code, expiresAt: existing.expiresAt?.toISOString() }
 
   const invite = await db.invite.create({
     data: {
@@ -149,13 +152,13 @@ export async function createInvite(clubId: string): Promise<{ code?: string; err
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     },
   })
-  return { code: invite.code }
+  return { code: invite.code, expiresAt: invite.expiresAt?.toISOString() }
 }
 
 export async function joinClub(code: string) {
   const userId = await requireUserId()
   const result = await acceptInvite(userId, code)
-  redirect("clubId" in result ? `/clubes/${result.clubId}` : `/convite/${code}`)
+  redirect("clubId" in result ? `/clubes/${result.clubId}?bemvindo=1` : `/convite/${code}`)
 }
 
 /** Entrar num clube público a partir da busca. */
@@ -166,7 +169,7 @@ export async function joinPublicClub(clubId: string): Promise<{ error?: string; 
     if (result.error === "limit") return { error: CLUB_LIMIT_MESSAGE, limit: true }
     return { error: result.error === "full" ? "Esse clube lotou" : "Não foi possível entrar nesse clube" }
   }
-  redirect(`/clubes/${result.clubId}`)
+  redirect(`/clubes/${result.clubId}?bemvindo=1`)
 }
 
 export async function leaveClub(clubId: string) {
@@ -255,16 +258,16 @@ async function canRunChallenges(clubId: string, userId: string) {
 export async function createChallenge(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const userId = await requireUserId()
   const parsed = challengeSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message }
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message, values: formValues(formData) }
   const { clubId, title, targetDays, startsOn, endsOn } = parsed.data
 
   const denied = await canRunChallenges(clubId, userId)
-  if (denied) return { error: denied }
-  if (endsOn < startsOn) return { error: "O fim precisa ser depois do início" }
+  if (denied) return { error: denied, values: formValues(formData) }
+  if (endsOn < startsOn) return { error: "O fim precisa ser depois do início", values: formValues(formData) }
   const length = periodLength(startsOn, endsOn)
-  if (length > 366) return { error: "O desafio pode durar no máximo um ano" }
-  if (targetDays > length) return { error: `O período tem ${length} dias; a meta não pode passar disso` }
-  if (endsOn < dayKey()) return { error: "Esse período já terminou" }
+  if (length > 366) return { error: "O desafio pode durar no máximo um ano", values: formValues(formData) }
+  if (targetDays > length) return { error: `O período tem ${length} dias; a meta não pode passar disso`, values: formValues(formData) }
+  if (endsOn < dayKey()) return { error: "Esse período já terminou", values: formValues(formData) }
 
   await db.clubChallenge.create({ data: { clubId, title, targetDays, startsOn, endsOn, createdById: userId } })
   refresh()

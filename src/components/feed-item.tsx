@@ -55,8 +55,9 @@ export function FeedItem({
         <time dateTime={checkIn.createdAt.toISOString()}>{timeAgo(checkIn.createdAt)}</time>
         {checkIn.minutes && <span>{checkIn.minutes} min</span>}
         <span className="flex items-center gap-1">
-          <ChatCircleIcon className="size-3.5" />
+          <ChatCircleIcon className="size-3.5" aria-hidden />
           {checkIn._count.comments}
+          <span className="sr-only">{checkIn._count.comments === 1 ? "comentário" : "comentários"}</span>
         </span>
       </div>
     </div>

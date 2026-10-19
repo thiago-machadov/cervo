@@ -103,7 +103,7 @@ async function TodayContent() {
           )}
 
           <section className="grid grid-cols-3 gap-3 px-4 text-center">
-            <Stat label="Págs. na semana" value={stats.pagesThisWeek} />
+            <Stat label="Págs. em 7 dias" value={stats.pagesThisWeek} />
             <Stat label="Dias lendo" value={stats.daysRead} />
             <Stat label="Livros lidos" value={stats.booksDone} />
           </section>

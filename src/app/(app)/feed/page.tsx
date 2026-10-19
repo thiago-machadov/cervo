@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
 import { getCurrentUser } from "@/lib/auth"
 import { countPendingRequests } from "@/lib/friends"
-import { getHomeFeed, getUserClubs } from "@/lib/queries"
+import { FEED_PAGE_SIZE, getHomeFeed, getUserClubs } from "@/lib/queries"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "Feed" }
@@ -59,11 +59,12 @@ async function FriendsLinkWithCount() {
 }
 
 async function FeedContent({ searchParams }: Pick<PageProps<"/feed">, "searchParams">) {
-  const { clube } = await searchParams
+  const { clube, antes } = await searchParams
+  const before = typeof antes === "string" && !Number.isNaN(Date.parse(antes)) ? new Date(antes) : undefined
   const user = await getCurrentUser()
   // Em paralelo: o getHomeFeed já só devolve check-ins de clubes de que o usuário participa.
   const requested = typeof clube === "string" ? clube : undefined
-  const [clubs, feed] = await Promise.all([getUserClubs(user.id), getHomeFeed(user.id, requested)])
+  const [clubs, feed] = await Promise.all([getUserClubs(user.id), getHomeFeed(user.id, requested, before)])
   const clubId = requested && clubs.some((c) => c.id === requested) ? requested : undefined
 
   const chips = [{ id: undefined, name: "Todos" }, ...clubs.map((c) => ({ id: c.id, name: c.name }))]
@@ -114,7 +115,36 @@ async function FeedContent({ searchParams }: Pick<PageProps<"/feed">, "searchPar
           }
         />
       ) : (
-        <FeedList items={feed} viewerId={user.id} />
+        <>
+          {before && (
+            <p className="px-4 text-sm text-muted-foreground">
+              Mostrando check-ins mais antigos.{" "}
+              <Link href={clubId ? `/feed?clube=${clubId}` : "/feed"} className="font-medium text-primary underline underline-offset-4">
+                Voltar aos recentes
+              </Link>
+            </p>
+          )}
+          <FeedList items={feed} viewerId={user.id} />
+          {/* Feed cresce sem limite: carrega por páginas, do mais novo ao mais antigo. */}
+          {feed.length === FEED_PAGE_SIZE ? (
+            <div className="px-4">
+              <Button
+                variant="outline"
+                className="h-11 w-full"
+                render={
+                  <Link
+                    href={`/feed?${new URLSearchParams({ ...(clubId ? { clube: clubId } : {}), antes: feed.at(-1)!.createdAt.toISOString() })}`}
+                  />
+                }
+                nativeButton={false}
+              >
+                Ver check-ins mais antigos
+              </Button>
+            </div>
+          ) : (
+            <p className="px-4 text-center text-xs text-muted-foreground">Você chegou ao começo. 🐦</p>
+          )}
+        </>
       )}
     </div>
   )

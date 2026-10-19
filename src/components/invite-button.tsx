@@ -9,8 +9,9 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, Dr
 import { createInvite } from "@/app/actions/clubs"
 
 /** Botão "Convidar": abre uma gaveta com o link do convite e opções de compartilhamento. */
-export function InviteButton({ clubId, clubName }: { clubId: string; clubName: string }) {
-  const [open, setOpen] = useState(false)
+/** `defaultOpen`: abre sozinha (logo depois de criar o clube, o próximo passo é convidar). */
+export function InviteButton({ clubId, clubName, defaultOpen = false }: { clubId: string; clubName: string; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
 
   return (
     <Drawer open={open} onOpenChange={setOpen} showSwipeHandle>
@@ -22,7 +23,7 @@ export function InviteButton({ clubId, clubName }: { clubId: string; clubName: s
           <DrawerHeader className="items-center text-center">
             <EnvelopeDoodle className="w-20" />
             <DrawerTitle>Convidar para {clubName}</DrawerTitle>
-            <DrawerDescription>Quem abrir o link entra direto no clube. O link vale por 7 dias.</DrawerDescription>
+            <DrawerDescription>Quem abrir o link vê o clube e entra com um toque (quem é novo cria a conta antes).</DrawerDescription>
           </DrawerHeader>
           {open && <InviteLink clubId={clubId} clubName={clubName} />}
         </div>
@@ -34,16 +35,21 @@ export function InviteButton({ clubId, clubName }: { clubId: string; clubName: s
 function InviteLink({ clubId, clubName }: { clubId: string; clubName: string }) {
   const [url, setUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [expiresAt, setExpiresAt] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
   const [copied, setCopied] = useState(false)
   const [, startTransition] = useTransition()
 
   useEffect(() => {
     startTransition(async () => {
-      const result = await createInvite(clubId)
-      if (result.code) setUrl(`${window.location.origin}/convite/${result.code}`)
-      else setError(result.error ?? "Não foi possível gerar o convite")
+      const result = await createInvite(clubId).catch(() => ({ code: undefined, expiresAt: undefined, error: undefined }))
+      if (result.code) {
+        setError(null)
+        setUrl(`${window.location.origin}/convite/${result.code}`)
+        setExpiresAt(result.expiresAt ?? null)
+      } else setError(result.error ?? "Não foi possível gerar o convite. Verifique a conexão.")
     })
-  }, [clubId])
+  }, [clubId, attempt])
 
   const message = `Bora ler junto no clube "${clubName}" no Cervo?`
   // Este componente só renderiza no navegador (depois de abrir a gaveta), então dá para checar aqui.
@@ -69,7 +75,16 @@ function InviteLink({ clubId, clubName }: { clubId: string; clubName: string }) 
     }
   }
 
-  if (error) return <p className="px-4 pb-6 text-center text-sm text-destructive">{error}</p>
+  if (error) {
+    return (
+      <div className="space-y-3 px-4 pb-6 text-center">
+        <p className="text-sm text-destructive">{error}</p>
+        <Button variant="outline" className="h-11 w-full" onClick={() => setAttempt((n) => n + 1)}>
+          Tentar de novo
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-3 px-4 pb-6">
@@ -85,19 +100,28 @@ function InviteLink({ clubId, clubName }: { clubId: string; clubName: string }) 
           {copied ? <CheckIcon weight="bold" /> : <CopyIcon />} {copied ? "Copiado" : "Copiar"}
         </Button>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      {expiresAt && (
+        <p className="text-center text-xs text-muted-foreground">
+          Link válido até {new Date(expiresAt).toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}.
+        </p>
+      )}
+      <div className={canShare ? "grid grid-cols-2 gap-2" : "grid gap-2"}>
         <Button
           variant="outline"
           className="h-11"
           disabled={!url}
-          render={<a href={url ? `https://wa.me/?text=${encodeURIComponent(`${message} ${url}`)}` : undefined} target="_blank" rel="noreferrer" />}
+          render={
+            <a href={url ? `https://wa.me/?text=${encodeURIComponent(`${message} ${url}`)}` : undefined} target="_blank" rel="noreferrer" />
+          }
           nativeButton={false}
         >
           <WhatsappLogoIcon className="size-5" /> WhatsApp
         </Button>
-        <Button variant="outline" className="h-11" onClick={share} disabled={!url || !canShare}>
-          <ShareNetworkIcon className="size-5" /> Compartilhar
-        </Button>
+        {canShare && (
+          <Button variant="outline" className="h-11" onClick={share} disabled={!url}>
+            <ShareNetworkIcon className="size-5" /> Compartilhar
+          </Button>
+        )}
       </div>
     </div>
   )

@@ -9,7 +9,14 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 
 /** `values` devolve o que a pessoa digitou, já que o React limpa o formulário após a action. */
 export type AuthState =
-  | { error?: string; confirmEmail?: string; resent?: boolean; values?: { name?: string; email?: string } }
+  | {
+      error?: string
+      confirmEmail?: string
+      resent?: boolean
+      /** E-mail ainda não confirmado ao entrar: a tela oferece reenviar o link. */
+      unconfirmed?: string
+      values?: { name?: string; email?: string }
+    }
   | undefined
 
 /** Mensagens do Supabase Auth traduzidas para o usuário. */
@@ -80,7 +87,11 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error || !data.user) {
-    return { error: authErrorMessage(error?.code, "Não foi possível entrar. Tente de novo."), values: { email } }
+    return {
+      error: authErrorMessage(error?.code, "Não foi possível entrar. Tente de novo."),
+      values: { email },
+      ...(error?.code === "email_not_confirmed" ? { unconfirmed: email } : {}),
+    }
   }
 
   const metadata = (data.user.user_metadata ?? {}) as { name?: unknown }

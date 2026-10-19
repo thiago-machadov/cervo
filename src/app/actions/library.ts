@@ -9,9 +9,9 @@ import { db } from "@/lib/db"
 import type { ActionState } from "@/lib/utils-text"
 
 const bookSchema = z.object({
-  title: z.string().trim().min(1, "Informe o título").max(200),
-  author: z.string().trim().min(1, "Informe o autor").max(120),
-  totalPages: z.coerce.number().int().min(1, "Número de páginas inválido").max(20000),
+  title: z.string().trim().min(1, "Informe o título").max(200, "Título muito longo (máximo de 200 caracteres)"),
+  author: z.string().trim().min(1, "Informe o autor").max(120, "Nome do autor muito longo (máximo de 120 caracteres)"),
+  totalPages: z.coerce.number({ message: "Informe o número de páginas" }).int("Use um número inteiro de páginas").min(1, "O livro precisa ter pelo menos 1 página").max(20000, "Máximo de 20.000 páginas"),
   status: z.enum(["WANT", "READING", "DONE"]).default("WANT"),
 })
 
@@ -60,13 +60,23 @@ export async function setLibraryStatus(itemId: string, status: "WANT" | "READING
   if (!item) return
 
   const now = new Date()
+  // Saindo de "Lido": a página volta para a do último check-in (marcar como lido leva a página ao fim).
+  let currentPage = status === "DONE" ? item.book.totalPages : item.currentPage
+  if (status !== "DONE" && item.status === "DONE") {
+    const last = await db.checkIn.findFirst({
+      where: { userId, bookId: item.bookId },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { toPage: true },
+    })
+    currentPage = Math.min(last?.toPage ?? 0, item.book.totalPages - 1)
+  }
   await db.libraryItem.update({
     where: { id: item.id },
     data: {
       status,
       startedAt: status !== "WANT" ? (item.startedAt ?? now) : item.startedAt,
       finishedAt: status === "DONE" ? now : null,
-      currentPage: status === "DONE" ? item.book.totalPages : item.currentPage,
+      currentPage,
     },
   })
   refresh()

@@ -60,7 +60,7 @@ async function ProfileContent() {
     { label: "Páginas lidas", value: stats.totalPages.toLocaleString("pt-BR") },
     { label: "Dias lendo", value: stats.daysRead },
     { label: "Livros lidos", value: stats.booksDone },
-    { label: "Páginas nos últimos 7 dias", value: stats.pagesThisWeek },
+    { label: "Págs. em 7 dias", value: stats.pagesThisWeek },
   ]
 
   return (

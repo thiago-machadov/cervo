@@ -4,6 +4,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import {
   BookOpenIcon,
+  CaretDownIcon,
   CameraIcon,
   ChartLineUpIcon,
   ChatsCircleIcon,
@@ -17,6 +18,7 @@ import type { Icon } from "@phosphor-icons/react/lib"
 import { BirdDoodle, BookDoodle, DeerDoodle, FlameDoodle, SpiralDoodle, StarDoodle, SunDoodle, ThreadDoodle } from "@/components/doodles"
 import { Button } from "@/components/ui/button"
 import { FREE_CLUB_LIMIT } from "@/lib/plan-limits"
+import { getInvite } from "@/lib/queries"
 import { getSessionUserId } from "@/lib/session"
 import { FAQ, SITE } from "@/lib/site-info"
 
@@ -51,9 +53,9 @@ export default function WelcomePage({ searchParams }: PageProps<"/boas-vindas">)
           <DeerDoodle className="w-10" label="Cervo" />
           <span className="font-display text-xl font-bold text-primary uppercase">Cervo</span>
         </Link>
-        <Link href="/entrar" className="text-sm font-semibold text-primary">
-          Entrar
-        </Link>
+        <Suspense fallback={<HeaderSignIn />}>
+          <HeaderSignInWithNext searchParams={searchParams} />
+        </Suspense>
       </header>
 
       {/* Hero */}
@@ -182,7 +184,10 @@ export default function WelcomePage({ searchParams }: PageProps<"/boas-vindas">)
         <div className="space-y-3">
           {FAQ.map(({ question, answer }) => (
             <details key={question} className="group rounded-2xl bg-card p-5 ring-1 ring-border/60">
-              <summary className="cursor-pointer list-none font-semibold marker:hidden">{question}</summary>
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-semibold marker:hidden">
+                {question}
+                <CaretDownIcon aria-hidden className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+              </summary>
               <p className="mt-3 text-sm text-muted-foreground">{answer}</p>
             </details>
           ))}
@@ -196,15 +201,9 @@ export default function WelcomePage({ searchParams }: PageProps<"/boas-vindas">)
           <FlameDoodle className="mx-auto w-10" />
           <h2 className="font-display text-3xl font-bold uppercase">Comece sua sequência hoje</h2>
           <p className="mx-auto max-w-md text-sm opacity-90">Leva menos de um minuto para criar a conta e fazer o primeiro check-in.</p>
-          <Button
-            size="lg"
-            variant="secondary"
-            className="h-12 px-8 text-base font-semibold"
-            render={<Link href="/cadastro" />}
-            nativeButton={false}
-          >
-            Criar conta grátis
-          </Button>
+          <Suspense fallback={<FinalSignUp />}>
+            <FinalSignUpWithNext searchParams={searchParams} />
+          </Suspense>
         </div>
       </section>
 
@@ -233,11 +232,67 @@ export default function WelcomePage({ searchParams }: PageProps<"/boas-vindas">)
   )
 }
 
+/** `next` só se for um caminho interno (vem de links de convite, perfil etc.). */
+async function nextFrom(searchParams: PageProps<"/boas-vindas">["searchParams"]) {
+  const { next } = await searchParams
+  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : undefined
+}
+
+function withNextQuery(path: string, next?: string) {
+  return next ? `${path}?next=${encodeURIComponent(next)}` : path
+}
+
+function HeaderSignIn({ next }: { next?: string }) {
+  return (
+    <Link href={withNextQuery("/entrar", next)} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-primary">
+      Entrar
+    </Link>
+  )
+}
+
+async function HeaderSignInWithNext({ searchParams }: Pick<PageProps<"/boas-vindas">, "searchParams">) {
+  return <HeaderSignIn next={await nextFrom(searchParams)} />
+}
+
+function FinalSignUp({ next }: { next?: string }) {
+  return (
+    <Button
+      size="lg"
+      variant="secondary"
+      className="h-12 px-8 text-base font-semibold"
+      render={<Link href={withNextQuery("/cadastro", next)} />}
+      nativeButton={false}
+    >
+      Criar conta grátis
+    </Button>
+  )
+}
+
+async function FinalSignUpWithNext({ searchParams }: Pick<PageProps<"/boas-vindas">, "searchParams">) {
+  return <FinalSignUp next={await nextFrom(searchParams)} />
+}
+
+/** Quem chega por um link de convite vê para qual clube foi chamado (e não perde o convite). */
+async function InviteNotice({ next }: { next?: string }) {
+  const code = next?.match(/^\/convite\/([\w-]+)/)?.[1]
+  if (!code) return null
+  const invite = await getInvite(code)
+  if (!invite || (invite.expiresAt && invite.expiresAt < new Date())) return null
+  return (
+    <p role="status" className="rounded-2xl bg-secondary p-3 text-sm text-secondary-foreground">
+      <span className="font-semibold">{invite.createdBy.name}</span> te convidou para o clube{" "}
+      <span className="font-semibold">{invite.club.name}</span>. Crie sua conta ou entre para participar.
+    </p>
+  )
+}
+
 async function WelcomeActionsWithSession({ searchParams }: Pick<PageProps<"/boas-vindas">, "searchParams">) {
   const { next, conta } = await searchParams
   if (await getSessionUserId()) redirect("/")
+  const safe = await nextFrom(searchParams)
   return (
     <>
+      <InviteNotice next={safe} />
       {conta === "excluida" && (
         <p role="status" className="rounded-2xl bg-secondary p-3 text-sm text-secondary-foreground">
           Sua conta e seus dados foram excluídos. Obrigado por ter lido com a gente.

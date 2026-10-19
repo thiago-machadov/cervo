@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 export default function InstallPage() {
   return (
-    <main className="md:mx-auto md:max-w-2xl">
-      <PageHeader title="Instalar o app" backHref="/perfil" />
+    <main className="mx-auto max-w-2xl">
+      <PageHeader title="Instalar o app" backHref="/" />
       <div className="pt-2">
         <InstallGuide />
       </div>

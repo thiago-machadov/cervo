@@ -2,7 +2,17 @@ import Link from "next/link"
 import { CaretLeftIcon } from "@phosphor-icons/react/dist/ssr"
 import { Button } from "@/components/ui/button"
 
-export function AuthHeader({ title, subtitle, next }: { title: string; subtitle: string; next?: string }) {
+export function AuthHeader({
+  title,
+  subtitle,
+  next,
+  backHref = "/boas-vindas",
+}: {
+  title: string
+  subtitle: string
+  next?: string
+  backHref?: string
+}) {
   const query = next ? `?next=${encodeURIComponent(next)}` : ""
   return (
     <div className="mb-8 space-y-6">
@@ -10,7 +20,7 @@ export function AuthHeader({ title, subtitle, next }: { title: string; subtitle:
         variant="ghost"
         size="icon-lg"
         className="-ml-2 text-primary"
-        render={<Link href={`/boas-vindas${query}`} />}
+        render={<Link href={`${backHref}${query}`} />}
         nativeButton={false}
       >
         <CaretLeftIcon className="size-5" />

@@ -1,6 +1,5 @@
-import Link from "next/link"
-import { TargetIcon } from "@phosphor-icons/react/dist/ssr"
 import { StampFrame, StarDoodle, SunDoodle } from "@/components/doodles"
+import { EditGoalDrawer } from "@/components/edit-goal-drawer"
 import { goalUnit } from "@/lib/goals"
 
 export function GoalCard({
@@ -14,16 +13,8 @@ export function GoalCard({
   pagesToday: number
   minutesToday: number
 }) {
-  if (!dailyGoal) {
-    return (
-      <Link href="/perfil" className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border/60">
-        <TargetIcon className="size-5 text-primary" />
-        <span className="text-sm">
-          Defina uma <span className="font-semibold text-primary">meta diária</span> no seu perfil
-        </span>
-      </Link>
-    )
-  }
+  // Sem meta: abre a definição ali mesmo, sem mandar a pessoa procurar no perfil.
+  if (!dailyGoal) return <EditGoalDrawer goalType={goalType} dailyGoal={null} />
 
   const done = goalType === "MINUTES" ? minutesToday : pagesToday
   const percent = Math.min(100, Math.round((done / dailyGoal) * 100))
@@ -51,7 +42,9 @@ export function GoalCard({
           </StampFrame>
         ) : (
           <div className="flex shrink-0 items-center gap-2 pb-1">
-            <span className="text-xs font-medium text-muted-foreground">Faltam {remaining}</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              Faltam {remaining} {goalUnit(goalType, remaining)}
+            </span>
             <SunDoodle className="w-8 opacity-80" />
           </div>
         )}

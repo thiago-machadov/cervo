@@ -1,7 +1,8 @@
 "use client"
 
 import { useOptimistic, useState, useTransition } from "react"
-import { SmileyIcon } from "@phosphor-icons/react/dist/ssr"
+import { SmileyIcon, XIcon } from "@phosphor-icons/react/dist/ssr"
+import { toast } from "sonner"
 import { toggleReaction } from "@/app/actions/checkins"
 import { REACTIONS, type ReactionEmoji, type ReactionSummary } from "@/lib/reactions"
 import { cn } from "@/lib/utils"
@@ -24,7 +25,12 @@ export function ReactionBar({ checkInId, reactions }: { checkInId: string; react
     setPickerOpen(false)
     startTransition(async () => {
       toggleOptimistic(emoji)
-      await toggleReaction(checkInId, emoji)
+      try {
+        await toggleReaction(checkInId, emoji)
+      } catch {
+        // O estado otimista volta sozinho; avisa para a falha não passar despercebida.
+        toast.error("Não foi possível reagir. Tente de novo.")
+      }
     })
   }
 
@@ -36,7 +42,7 @@ export function ReactionBar({ checkInId, reactions }: { checkInId: string; react
           type="button"
           onClick={() => toggle(r.emoji)}
           aria-pressed={r.mine}
-          aria-label={`${r.emoji} ${r.count} ${r.mine ? "(sua reação, toque para remover)" : ""}`}
+          aria-label={`${r.emoji} ${r.count}${r.mine ? " (sua reação, toque para remover)" : ""}`}
           className={cn(
             "flex h-8 items-center gap-1 rounded-full bg-muted px-2.5 text-sm transition-colors pointer-coarse:h-10 pointer-coarse:px-3",
             r.mine && "bg-secondary font-semibold text-secondary-foreground ring-1 ring-primary/40"
@@ -48,7 +54,12 @@ export function ReactionBar({ checkInId, reactions }: { checkInId: string; react
       ))}
 
       {pickerOpen ? (
-        <div className="flex items-center gap-0.5 rounded-full bg-card p-0.5 shadow-md ring-1 ring-border" role="group" aria-label="Escolha uma reação">
+        <div
+          className="flex items-center gap-0.5 rounded-full bg-card p-0.5 shadow-md ring-1 ring-border"
+          role="group"
+          aria-label="Escolha uma reação"
+          onKeyDown={(event) => event.key === "Escape" && setPickerOpen(false)}
+        >
           {REACTIONS.map((emoji) => (
             <button
               key={emoji}
@@ -60,6 +71,14 @@ export function ReactionBar({ checkInId, reactions }: { checkInId: string; react
               {emoji}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setPickerOpen(false)}
+            className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted pointer-coarse:size-10"
+            aria-label="Fechar"
+          >
+            <XIcon className="size-4" />
+          </button>
         </div>
       ) : (
         <button

@@ -37,15 +37,17 @@ export function BookCover({
   )
 }
 
-/** Avatar quadrado de clube: iniciais do nome sobre a cor do clube. */
-export function ClubTile({ name, className }: { name: string; className?: string }) {
+/**
+ * Avatar quadrado de clube: iniciais do nome sobre a cor do clube.
+ * `decorative`: quando o nome já aparece ao lado (evita o leitor de tela repetir o nome).
+ */
+export function ClubTile({ name, className, decorative = false }: { name: string; className?: string; decorative?: boolean }) {
   const color = colorFor(name)
   return (
     <div
       className={cn("@container relative aspect-square w-14 shrink-0 overflow-hidden rounded-2xl", className)}
       style={{ backgroundColor: color.bg, color: color.fg }}
-      role="img"
-      aria-label={`Clube ${name}`}
+      {...(decorative ? { "aria-hidden": true } : { role: "img", "aria-label": `Clube ${name}` })}
     >
       <span className="font-display absolute inset-0 flex items-center justify-center text-[36cqw] font-bold leading-none">
         {initialsOf(name)}
