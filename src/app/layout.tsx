@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Geist_Mono, Noto_Sans, Roboto_Slab } from "next/font/google"
 import { CrayonDefs } from "@/components/doodles/crayon-defs"
 import { Toaster } from "@/components/ui/sonner"
+import { SITE } from "@/lib/site-info"
 import "./globals.css"
 
 const sans = Noto_Sans({
@@ -21,10 +22,22 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: { default: "Cervo", template: "%s · Cervo" },
-  description: "Cervo: seu clube do livro com os amigos. Check-ins diários, metas e sequências de leitura.",
-  applicationName: "Cervo",
-  appleWebApp: { capable: true, title: "Cervo", statusBarStyle: "default" },
+  metadataBase: new URL(SITE.url),
+  title: { default: SITE.title, template: "%s · Cervo" },
+  description: SITE.description,
+  applicationName: SITE.name,
+  keywords: ["clube do livro", "app de leitura", "hábito de leitura", "meta de leitura", "check-in de leitura", "sequência de leitura", "ler mais"],
+  appleWebApp: { capable: true, title: SITE.name, statusBarStyle: "default" },
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: "/",
+    siteName: SITE.name,
+    title: SITE.title,
+    description: SITE.description,
+  },
+  twitter: { card: "summary_large_image", title: SITE.title, description: SITE.description },
+  formatDetection: { telephone: false },
 }
 
 export const viewport: Viewport = {

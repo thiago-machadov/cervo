@@ -3,7 +3,11 @@ import Link from "next/link"
 import { LegalDocument } from "@/components/legal-document"
 import { LEGAL } from "@/lib/legal"
 
-export const metadata: Metadata = { title: "Termos de uso" }
+export const metadata: Metadata = {
+  title: "Termos de uso",
+  description: "Termos de uso do Cervo, app de clube do livro e hábito de leitura.",
+  alternates: { canonical: "/termos" },
+}
 
 export default function TermsPage() {
   const { appName, site, contactEmail, lastUpdated, minimumAge } = LEGAL

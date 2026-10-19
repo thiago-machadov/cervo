@@ -1,4 +1,8 @@
+import type { Metadata } from "next"
 import { SpiralClusterDoodle } from "@/components/doodles"
+
+// Login, cadastro e senha: o Google pode seguir os links, mas não lista estas telas.
+export const metadata: Metadata = { robots: { index: false, follow: true } }
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (

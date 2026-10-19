@@ -4,8 +4,10 @@ import type Stripe from "stripe"
 import { db } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
 
-/** No plano grátis, cada pessoa participa de no máximo 2 clubes (contando os que criou). */
-export const FREE_CLUB_LIMIT = 2
+import { FREE_CLUB_LIMIT } from "@/lib/plan-limits"
+
+/** No plano grátis, cada pessoa participa de no máximo FREE_CLUB_LIMIT clubes (contando os que criou). */
+export { FREE_CLUB_LIMIT }
 
 /** Status do Stripe que dão acesso ao Pro. past_due mantém o acesso enquanto o Stripe tenta cobrar de novo. */
 const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due"])

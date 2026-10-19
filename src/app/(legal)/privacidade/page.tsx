@@ -3,7 +3,11 @@ import Link from "next/link"
 import { LegalDocument } from "@/components/legal-document"
 import { LEGAL } from "@/lib/legal"
 
-export const metadata: Metadata = { title: "Política de privacidade" }
+export const metadata: Metadata = {
+  title: "Política de privacidade",
+  description: "Como o Cervo coleta, usa e protege seus dados, conforme a LGPD.",
+  alternates: { canonical: "/privacidade" },
+}
 
 export default function PrivacyPage() {
   const { appName, site, contactEmail, lastUpdated, minimumAge } = LEGAL

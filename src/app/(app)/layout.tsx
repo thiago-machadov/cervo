@@ -1,5 +1,9 @@
+import type { Metadata } from "next"
 import { Suspense } from "react"
 import { BottomNav, BottomNavItems } from "@/components/bottom-nav"
+
+// Telas da conta: não entram no Google (exceto /instalar, que libera na própria página).
+export const metadata: Metadata = { robots: { index: false, follow: false } }
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
