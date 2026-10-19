@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { DownloadSimpleIcon, LockSimpleIcon, PencilSimpleIcon, TargetIcon, TrophyIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr"
@@ -17,9 +18,21 @@ import { getCurrentUser } from "@/lib/auth"
 import { canManageClub, clubMembersLabel, findClubHeir } from "@/lib/clubs"
 import { getClubChallenges } from "@/lib/challenges"
 import { dayKey, formatDate } from "@/lib/dates"
+import { db } from "@/lib/db"
 import { isPro } from "@/lib/plan"
 import { expectedPage, getClubDetail } from "@/lib/queries"
+import { getSessionUserId } from "@/lib/session"
 import { cn } from "@/lib/utils"
+
+/** Título com o nome do clube, só para quem é membro (não vaza nomes de clubes privados). */
+export async function generateMetadata({ params }: PageProps<"/clubes/[id]">): Promise<Metadata> {
+  const { id } = await params
+  const userId = await getSessionUserId()
+  const club = userId
+    ? await db.club.findFirst({ where: { id, members: { some: { userId } } }, select: { name: true } })
+    : null
+  return { title: club?.name ?? "Clube" }
+}
 
 export default function ClubPage({ params }: PageProps<"/clubes/[id]">) {
   return (

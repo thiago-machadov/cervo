@@ -38,7 +38,7 @@ export function ReactionBar({ checkInId, reactions }: { checkInId: string; react
           aria-pressed={r.mine}
           aria-label={`${r.emoji} ${r.count} ${r.mine ? "(sua reação, toque para remover)" : ""}`}
           className={cn(
-            "flex h-8 items-center gap-1 rounded-full bg-muted px-2.5 text-sm transition-colors",
+            "flex h-8 items-center gap-1 rounded-full bg-muted px-2.5 text-sm transition-colors pointer-coarse:h-10 pointer-coarse:px-3",
             r.mine && "bg-secondary font-semibold text-secondary-foreground ring-1 ring-primary/40"
           )}
         >
@@ -54,7 +54,7 @@ export function ReactionBar({ checkInId, reactions }: { checkInId: string; react
               key={emoji}
               type="button"
               onClick={() => toggle(emoji)}
-              className="flex size-8 items-center justify-center rounded-full text-lg transition-transform hover:scale-110 active:scale-95"
+              className="flex size-8 items-center justify-center rounded-full text-lg transition-transform hover:scale-110 active:scale-95 pointer-coarse:size-10"
               aria-label={`Reagir com ${emoji}`}
             >
               {emoji}
@@ -65,7 +65,7 @@ export function ReactionBar({ checkInId, reactions }: { checkInId: string; react
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
+          className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted pointer-coarse:size-10"
           aria-label="Adicionar reação"
         >
           <SmileyIcon className="size-5" />

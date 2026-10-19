@@ -4,6 +4,7 @@ import { useTransition } from "react"
 import { CrownSimpleIcon, DotsThreeVerticalIcon, ShieldCheckIcon, ShieldSlashIcon, UserMinusIcon } from "@phosphor-icons/react/dist/ssr"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { useConfirm } from "@/components/confirm-dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,14 +27,18 @@ export function MemberActions({
   viewerRole: Role
 }) {
   const [pending, startTransition] = useTransition()
+  const confirm = useConfirm()
   const firstName = member.name.split(" ")[0]
   const isOwner = viewerRole === "OWNER"
   const canRemove = member.role !== "OWNER" && (isOwner || (viewerRole === "ADMIN" && member.role === "MEMBER"))
   if (!canRemove && !isOwner) return null
   if (member.role === "OWNER") return null
 
-  function run(action: () => Promise<MemberActionResult>, confirmMessage?: string) {
-    if (confirmMessage && !confirm(confirmMessage)) return
+  async function run(
+    action: () => Promise<MemberActionResult>,
+    ask?: { title: string; description: string; confirmLabel: string; destructive?: boolean }
+  ) {
+    if (ask && !(await confirm(ask))) return
     startTransition(async () => {
       const result = await action()
       if (result.error) toast.error(result.error)
@@ -62,7 +67,11 @@ export function MemberActions({
             onClick={() =>
               run(
                 () => transferOwnership(clubId, member.id),
-                `Passar o clube para ${firstName}? Você vira admin e ${firstName} passa a ser o dono.`
+                {
+                  title: `Passar o clube para ${firstName}?`,
+                  description: `${firstName} passa a ser o dono e você vira admin.`,
+                  confirmLabel: "Passar o clube",
+                }
               )
             }
           >
@@ -74,7 +83,14 @@ export function MemberActions({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onClick={() => run(() => removeMember(clubId, member.id), `Remover ${firstName} do clube?`)}
+              onClick={() =>
+                run(() => removeMember(clubId, member.id), {
+                  title: `Remover ${firstName} do clube?`,
+                  description: "A pessoa sai do ranking e do feed do clube. Ela pode voltar se receber um novo convite.",
+                  confirmLabel: "Remover",
+                  destructive: true,
+                })
+              }
             >
               <UserMinusIcon /> Remover do clube
             </DropdownMenuItem>

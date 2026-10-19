@@ -79,10 +79,22 @@ function CheckInForm({
   const selected = options.find((o) => o.id === itemId) ?? options[0]!
 
   useEffect(() => {
-    if (state?.ok) {
+    if (!state?.ok) return
+    const c = state.celebrate
+    if (c?.finished) {
+      toast.success("Livro terminado! 🎉", { description: "Mais um para a estante. Que tal escolher o próximo?" })
+    } else if (c) {
+      const unit = c.goal?.type === "MINUTES" ? "min" : "págs."
+      const goalText = !c.goal
+        ? "Leitura registrada."
+        : c.goal.done >= c.goal.target
+          ? "Meta de hoje batida! ✅"
+          : `Faltam ${c.goal.target - c.goal.done} ${unit} para a meta de hoje.`
+      toast.success(c.streak > 1 ? `${c.streak} dias seguidos! 🔥` : "Sequência começou! 🔥", { description: goalText })
+    } else {
       toast.success("Check-in registrado! 🔥")
-      onDone()
     }
+    onDone()
   }, [state, onDone])
 
   return (

@@ -8,6 +8,7 @@ import { deleteImages, saveCheckInPhoto } from "@/lib/covers"
 import { db } from "@/lib/db"
 import { dayKey } from "@/lib/dates"
 import { findFriendship } from "@/lib/friends"
+import { getUserStats } from "@/lib/queries"
 import { isReaction } from "@/lib/reactions"
 import type { ActionState } from "@/lib/utils-text"
 
@@ -21,7 +22,16 @@ const checkInSchema = z.object({
   note: z.string().trim().max(1000).optional(),
 })
 
-export async function createCheckIn(_prev: ActionState, formData: FormData): Promise<ActionState> {
+/** Dados para comemorar o check-in (sequência e meta do dia). */
+export type CheckInResult =
+  | {
+      error?: string
+      ok?: boolean
+      celebrate?: { streak: number; finished: boolean; goal: { type: "PAGES" | "MINUTES"; target: number; done: number } | null }
+    }
+  | undefined
+
+export async function createCheckIn(_prev: CheckInResult, formData: FormData): Promise<CheckInResult> {
   const userId = await requireUserId()
   const parsed = checkInSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0]?.message }
@@ -72,8 +82,21 @@ export async function createCheckIn(_prev: ActionState, formData: FormData): Pro
     }),
   ])
 
+  const [stats, user] = await Promise.all([
+    getUserStats(userId),
+    db.user.findUnique({ where: { id: userId }, select: { goalType: true, dailyGoal: true } }),
+  ])
+  const goal =
+    user?.goalType && user.dailyGoal
+      ? {
+          type: user.goalType,
+          target: user.dailyGoal,
+          done: user.goalType === "MINUTES" ? stats.minutesToday : stats.pagesToday,
+        }
+      : null
+
   refresh()
-  return { ok: true }
+  return { ok: true, celebrate: { streak: stats.current, finished, goal } }
 }
 
 const editSchema = z.object({

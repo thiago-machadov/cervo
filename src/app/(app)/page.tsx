@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { BookOpenTextIcon } from "@phosphor-icons/react/dist/ssr"
 import { CheckInDrawer } from "@/components/check-in-drawer"
@@ -13,6 +14,8 @@ import { Button } from "@/components/ui/button"
 import { getCurrentUser } from "@/lib/auth"
 import { APP_TIME_ZONE } from "@/lib/dates"
 import { getCheckInOptions, getLibrary, getUserStats } from "@/lib/queries"
+
+export const metadata: Metadata = { title: "Hoje" }
 
 export default function TodayPage() {
   return (

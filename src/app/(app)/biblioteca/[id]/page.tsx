@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { BookOpenTextIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover } from "@/components/book-cover"
@@ -9,7 +10,19 @@ import { PageSuspense } from "@/components/page-suspense"
 import { SectionHeader } from "@/components/section-header"
 import { Button } from "@/components/ui/button"
 import { getCurrentUser } from "@/lib/auth"
+import { db } from "@/lib/db"
 import { getLibraryItem } from "@/lib/queries"
+import { getSessionUserId } from "@/lib/session"
+
+/** Título com o nome do livro, só se ele estiver na biblioteca de quem está vendo. */
+export async function generateMetadata({ params }: PageProps<"/biblioteca/[id]">): Promise<Metadata> {
+  const { id } = await params
+  const userId = await getSessionUserId()
+  const item = userId
+    ? await db.libraryItem.findFirst({ where: { id, userId }, select: { book: { select: { title: true } } } })
+    : null
+  return { title: item?.book.title ?? "Livro" }
+}
 
 export default function LibraryItemPage({ params }: PageProps<"/biblioteca/[id]">) {
   return (

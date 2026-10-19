@@ -5,6 +5,7 @@ import { PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr"
 import { toast } from "sonner"
 import { CoverPicker } from "@/components/cover-picker"
 import { Button } from "@/components/ui/button"
+import { useConfirm } from "@/components/confirm-dialog"
 import {
   Drawer,
   DrawerContent,
@@ -33,12 +34,18 @@ type EditableCheckIn = {
 export function CheckInActions({ checkIn, isLatest }: { checkIn: EditableCheckIn; isLatest: boolean }) {
   const [open, setOpen] = useState(false)
   const [deleting, startDelete] = useTransition()
+  const confirm = useConfirm()
 
-  function remove() {
-    const message = isLatest
-      ? `Apagar este check-in? Seu progresso no livro volta para a página ${checkIn.fromPage}. Comentários e reações também somem.`
-      : "Apagar este check-in? Comentários e reações também somem."
-    if (confirm(message)) startDelete(() => deleteCheckIn(checkIn.id))
+  async function remove() {
+    const ok = await confirm({
+      title: "Apagar este check-in?",
+      description: isLatest
+        ? `Seu progresso no livro volta para a página ${checkIn.fromPage}. Comentários e reações também somem.`
+        : "Comentários e reações deste check-in também somem.",
+      confirmLabel: "Apagar",
+      destructive: true,
+    })
+    if (ok) startDelete(() => deleteCheckIn(checkIn.id))
   }
 
   return (

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ClubForm } from "@/components/club-form"
 import { PageHeader } from "@/components/page-header"
@@ -5,6 +6,8 @@ import { PageSuspense } from "@/components/page-suspense"
 import { getCurrentUser } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { getLibrary } from "@/lib/queries"
+
+export const metadata: Metadata = { title: "Editar clube" }
 
 export default function EditClubPage({ params }: PageProps<"/clubes/[id]/editar">) {
   return (

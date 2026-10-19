@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Geist_Mono, Noto_Sans, Roboto_Slab } from "next/font/google"
+import { NavigationTracker } from "@/components/back-button"
+import { ConfirmProvider } from "@/components/confirm-dialog"
 import { CrayonDefs } from "@/components/doodles/crayon-defs"
 import { Toaster } from "@/components/ui/sonner"
 import { SITE } from "@/lib/site-info"
@@ -54,7 +56,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="pt-BR" className={`${sans.variable} ${display.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full bg-background">
         <CrayonDefs />
-        {children}
+        <NavigationTracker />
+        <ConfirmProvider>{children}</ConfirmProvider>
         <Toaster position="top-center" />
       </body>
     </html>

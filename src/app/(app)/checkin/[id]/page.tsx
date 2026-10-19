@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { CheckInActions } from "@/components/check-in-actions"
 import { CommentForm } from "@/components/comment-form"
@@ -9,6 +10,8 @@ import { UserAvatar } from "@/components/user-avatar"
 import { getCurrentUser } from "@/lib/auth"
 import { timeAgo } from "@/lib/dates"
 import { getCheckInDetail, isLatestCheckIn } from "@/lib/queries"
+
+export const metadata: Metadata = { title: "Check-in" }
 
 export default function CheckInPage({ params }: PageProps<"/checkin/[id]">) {
   return (

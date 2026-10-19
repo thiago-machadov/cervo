@@ -4,6 +4,7 @@ import { useTransition } from "react"
 import { CheckIcon, UserMinusIcon, UserPlusIcon, XIcon } from "@phosphor-icons/react/dist/ssr"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { useConfirm } from "@/components/confirm-dialog"
 import { removeFriendship, respondFriendRequest, sendFriendRequest, type FriendActionResult } from "@/app/actions/friends"
 import type { FriendState } from "@/lib/friends"
 import { cn } from "@/lib/utils"
@@ -21,6 +22,7 @@ export function FriendButton({
   className?: string
 }) {
   const [pending, startTransition] = useTransition()
+  const confirm = useConfirm()
   const height = size === "sm" ? "h-9" : "h-11"
 
   function run(action: () => Promise<FriendActionResult>) {
@@ -77,10 +79,14 @@ export function FriendButton({
       variant="outline"
       className={cn(height, className)}
       disabled={pending}
-      onClick={() => {
-        if (window.confirm("Desfazer a amizade? Vocês deixam de ver a leitura um do outro no feed.")) {
-          run(() => removeFriendship(state.friendshipId))
-        }
+      onClick={async () => {
+        const ok = await confirm({
+          title: "Desfazer a amizade?",
+          description: "Vocês deixam de ver a leitura um do outro no feed. Dá para pedir amizade de novo depois.",
+          confirmLabel: "Desfazer",
+          destructive: true,
+        })
+        if (ok) run(() => removeFriendship(state.friendshipId))
       }}
     >
       <UserMinusIcon /> {pending ? "Removendo…" : "Desfazer amizade"}
