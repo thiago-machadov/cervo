@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { LegalDocument } from "@/components/legal-document"
 import { LEGAL } from "@/lib/legal"
+import { TRIAL_DAYS } from "@/lib/plan"
 
 export const metadata: Metadata = {
   title: "Termos de uso",
@@ -24,9 +25,35 @@ export default function TermsPage() {
       <h2>O serviço</h2>
       <p>
         O {appName} permite manter uma biblioteca, fazer check-ins de leitura, acompanhar metas e sequências, participar de
-        clubes, adicionar amigos, comentar e reagir. O app é oferecido gratuitamente e pode mudar, ganhar ou perder
+        clubes, adicionar amigos, comentar e reagir. O app é oferecido por assinatura e pode mudar, ganhar ou perder
         funções com o tempo.
       </p>
+
+      <h2>Assinatura, teste grátis e cobrança</h2>
+      <ul>
+        <li>
+          Para usar o app é preciso uma assinatura mensal ou anual. Os preços atuais estão na página de assinatura e
+          aparecem antes de você confirmar o pagamento.
+        </li>
+        <li>
+          Na primeira assinatura há {TRIAL_DAYS} dias de teste grátis. Pedimos o cartão no início; a primeira cobrança acontece
+          no fim do teste, na data mostrada antes da confirmação. Cancelando antes dessa data, nada é cobrado.
+        </li>
+        <li>
+          A assinatura renova automaticamente a cada mês ou ano até ser cancelada. Você cancela a qualquer momento em
+          “Gerenciar assinatura”, e o acesso continua até o fim do período já pago.
+        </li>
+        <li>
+          Direito de arrependimento: se pedir o cancelamento em até 7 dias depois da primeira cobrança, devolvemos o
+          valor integral (art. 49 do Código de Defesa do Consumidor). Fora desse prazo, não há reembolso proporcional
+          do período em andamento.
+        </li>
+        <li>
+          Se mudarmos o preço, avisaremos com pelo menos 30 dias de antecedência; o novo valor vale a partir da renovação
+          seguinte, e você pode cancelar antes dela.
+        </li>
+        <li>Os pagamentos são processados pelo Stripe. O {appName} não vê nem guarda os dados do seu cartão.</li>
+      </ul>
 
       <h2>Sua conta</h2>
       <ul>

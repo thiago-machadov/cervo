@@ -4,8 +4,7 @@ import { refresh } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
-import { acceptInvite, CLUB_LIMIT_MESSAGE, joinErrorMessage, parseInviteCode } from "@/lib/clubs"
-import { remainingClubSlots } from "@/lib/plan"
+import { acceptInvite, joinErrorMessage, parseInviteCode } from "@/lib/clubs"
 import { saveCover } from "@/lib/covers"
 import { db } from "@/lib/db"
 import { safeNext } from "@/lib/redirects"
@@ -88,7 +87,6 @@ export async function finishOnboarding(_prev: ActionState, formData: FormData): 
     if ("error" in result) return { error: joinErrorMessage(result.error) }
     destination = `/clubes/${result.clubId}`
   } else if (input.mode === "create") {
-    if ((await remainingClubSlots(userId)) === 0) return { error: CLUB_LIMIT_MESSAGE }
     // Sem livro (passo pulado), o clube nasce sem livro definido; o dono escolhe depois.
     const bookId = user.library[0]?.bookId ?? null
     const club = await db.club.create({

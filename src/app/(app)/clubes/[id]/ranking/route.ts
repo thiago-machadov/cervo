@@ -1,5 +1,4 @@
 import { getClubRole } from "@/lib/clubs"
-import { isPro } from "@/lib/plan"
 import { getClubDetail } from "@/lib/queries"
 import { getSessionUserId } from "@/lib/session"
 
@@ -8,7 +7,7 @@ function csvCell(value: string | number | null | undefined) {
   return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
 
-/** Exporta o ranking do clube em CSV (dono/admins, recurso Pro do dono). */
+/** Exporta o ranking do clube em CSV (dono e admins). */
 export async function GET(_request: Request, { params }: RouteContext<"/clubes/[id]/ranking">) {
   const { id } = await params
   const userId = await getSessionUserId()
@@ -18,7 +17,6 @@ export async function GET(_request: Request, { params }: RouteContext<"/clubes/[
   if (role !== "OWNER" && role !== "ADMIN") return new Response("Só o dono e os admins exportam o ranking", { status: 403 })
   const data = await getClubDetail(id, userId)
   if (!data) return new Response("Clube não encontrado", { status: 404 })
-  if (!(await isPro(data.club.ownerId))) return new Response("Recurso do Cervo Pro", { status: 403 })
 
   const { club, ranking, freeReading } = data
   const header = ["posição", "nome", "páginas", "dias com check-in", "sequência atual", freeReading ? "lendo agora" : "página atual"]

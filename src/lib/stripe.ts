@@ -6,7 +6,7 @@ export const PRICE_LOOKUP_KEYS = { month: "cervo_pro_monthly", year: "cervo_pro_
 export type BillingInterval = keyof typeof PRICE_LOOKUP_KEYS
 
 /** Valores exibidos nas telas (os preços reais moram no Stripe; manter em sincronia). */
-export const PRO_PRICES = { month: 9.9, year: 79.9 } as const
+export const PRO_PRICES = { month: 17.99, year: 144.96 } as const
 
 export function isStripeConfigured() {
   return Boolean(process.env.STRIPE_SECRET_KEY)

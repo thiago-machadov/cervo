@@ -4,15 +4,20 @@ export const SITE = {
   url: "https://cervobook.club",
   title: "Cervo: app de clube do livro e hábito de leitura",
   description:
-    "Crie seu clube do livro, faça check-in da leitura todo dia, mantenha a sequência e bata metas de páginas ou minutos com os amigos. Grátis, direto no celular.",
+    "Crie seu clube do livro, faça check-in da leitura todo dia, mantenha a sequência e bata metas de páginas ou minutos com os amigos. 14 dias grátis, direto no celular.",
   email: "cervobookclub@gmail.com",
 }
 
 export const FAQ: { question: string; answer: string }[] = [
   {
-    question: "O Cervo é grátis?",
+    question: "Quanto custa o Cervo?",
     answer:
-      "Sim. Check-ins, sequência, metas, biblioteca, amigos e até 2 clubes são grátis e sem anúncios. O Cervo Pro (R$ 9,90/mês ou R$ 79,90/ano) libera clubes ilimitados, estatísticas, retrospectiva do ano e desafios.",
+      "Os primeiros 14 dias são grátis. Depois, R$ 17,99 por mês ou R$ 144,96 por ano (R$ 12,08 por mês). Cancele antes do fim do teste e não paga nada.",
+  },
+  {
+    question: "Por que pede o cartão no teste grátis?",
+    answer:
+      "Para a assinatura continuar sem interrupção depois do teste. Você vê a data da primeira cobrança antes de confirmar e pode cancelar em dois toques a qualquer momento.",
   },
   {
     question: "Preciso baixar na App Store ou no Google Play?",

@@ -16,7 +16,6 @@ import { EditGoalDrawer } from "@/components/edit-goal-drawer"
 import { SubmitButton } from "@/components/submit-button"
 import { PageHeader } from "@/components/page-header"
 import { PageSuspense } from "@/components/page-suspense"
-import { ProBadge } from "@/components/pro-badge"
 import { UserAvatar } from "@/components/user-avatar"
 import { signOut } from "@/app/actions/auth"
 import { getCurrentUser } from "@/lib/auth"
@@ -45,14 +44,17 @@ export default function ProfilePage() {
 async function ProfileContent() {
   const user = await getCurrentUser()
   const [stats, plan] = await Promise.all([getUserStats(user.id), getPlan(user.id)])
+  const sub = plan.subscription
   const planHint =
-    plan.source === "stripe"
-      ? plan.subscription?.cancelAtPeriodEnd && plan.subscription.currentPeriodEnd
-        ? `Cancelado · acesso até ${formatDate(plan.subscription.currentPeriodEnd)}`
-        : "Assinatura ativa · gerenciar"
+    plan.source === "stripe" && sub?.currentPeriodEnd
+      ? sub.cancelAtPeriodEnd
+        ? `Cancelada · acesso até ${formatDate(sub.currentPeriodEnd)}`
+        : sub.status === "trialing"
+          ? `Teste grátis até ${formatDate(sub.currentPeriodEnd)}`
+          : `Renova em ${formatDate(sub.currentPeriodEnd)}`
       : plan.source === "founder" && plan.proUntil
-        ? `Fundador · Pro grátis até ${formatDate(plan.proUntil)}`
-        : "Clubes ilimitados, estatísticas e mais"
+        ? `Fundador · grátis até ${formatDate(plan.proUntil)}`
+        : "Ver planos"
 
   const items = [
     { label: "Sequência atual", value: `${stats.current} ${stats.current === 1 ? "dia" : "dias"}` },
@@ -74,7 +76,7 @@ async function ProfileContent() {
             <UserAvatar name={user.name} className="size-16 text-lg" />
             <div className="min-w-0">
               <p className="truncate text-lg font-semibold">
-                {user.name} {plan.isPro && <ProBadge className="ml-1" />}
+                {user.name}
               </p>
               <p className="truncate text-sm text-muted-foreground">{user.email}</p>
             </div>
@@ -86,7 +88,7 @@ async function ProfileContent() {
           >
             <SparkleIcon className="size-6 shrink-0" weight="fill" />
             <span className="min-w-0 flex-1">
-              <span className="block font-semibold">{plan.isPro ? "Cervo Pro" : "Conheça o Cervo Pro"}</span>
+              <span className="block font-semibold">Assinatura</span>
               <span className="block text-xs opacity-90">{planHint}</span>
             </span>
             <CaretRightIcon className="size-4" />

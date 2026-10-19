@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation"
 import { getSessionUser } from "@/lib/auth"
-import { ensureStripeCustomer, getPlan } from "@/lib/plan"
+import { TRIAL_DAYS, ensureStripeCustomer, getPlan } from "@/lib/plan"
 import { siteOrigin } from "@/lib/site"
 import { PRICE_LOOKUP_KEYS, isStripeConfigured, stripe, type BillingInterval } from "@/lib/stripe"
 import type { ActionState } from "@/lib/utils-text"
@@ -26,11 +26,13 @@ export async function startCheckout(_prev: ActionState, formData: FormData): Pro
   const price = prices.data[0]
   if (!price) return { error: "Plano indisponível no momento. Tente mais tarde." }
 
-  // Fundador que assina antes do fim da cortesia só começa a pagar quando ela acabar.
-  const trialEnd =
+  // Fundador que assina antes do fim da cortesia só começa a pagar quando ela acabar;
+  // os demais ganham o teste grátis na primeira assinatura (cartão obrigatório, cobrança no fim do teste).
+  const founderTrialEnd =
     plan.source === "founder" && plan.proUntil && plan.proUntil.getTime() > Date.now() + 48 * 60 * 60 * 1000
       ? Math.floor(plan.proUntil.getTime() / 1000)
       : undefined
+  const trial = founderTrialEnd ? { trial_end: founderTrialEnd } : plan.canTrial ? { trial_period_days: TRIAL_DAYS } : {}
 
   const origin = await siteOrigin()
   const session = await client.checkout.sessions.create({
@@ -38,11 +40,12 @@ export async function startCheckout(_prev: ActionState, formData: FormData): Pro
     customer: customerId,
     client_reference_id: user.id,
     line_items: [{ price: price.id, quantity: 1 }],
-    subscription_data: { metadata: { userId: user.id }, ...(trialEnd ? { trial_end: trialEnd } : {}) },
+    subscription_data: { metadata: { userId: user.id }, ...trial },
+    payment_method_collection: "always",
     allow_promotion_codes: true,
     locale: "pt-BR",
     success_url: `${origin}/assinatura/sucesso?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/assinatura`,
+    cancel_url: `${origin}/assinar`,
   })
   if (!session.url) return { error: "Não foi possível abrir o pagamento. Tente de novo." }
   redirect(session.url)

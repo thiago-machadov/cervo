@@ -1,7 +1,6 @@
 "use client"
 
 import { useActionState, useState } from "react"
-import { SparkleIcon } from "@phosphor-icons/react/dist/ssr"
 import { Button } from "@/components/ui/button"
 import { FieldError } from "@/components/ui/field"
 import { startCheckout } from "@/app/actions/billing"
@@ -9,15 +8,34 @@ import { cn } from "@/lib/utils"
 
 const brl = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 
-/** Escolha mensal/anual e botão que leva ao checkout do Stripe. */
-export function PlanPicker({ prices, founderUntil }: { prices: { month: number; year: number }; founderUntil?: string }) {
+/**
+ * Escolha mensal/anual e botão que leva ao checkout do Stripe.
+ * `trialEnd`: data da primeira cobrança quando há teste grátis (ou cortesia de fundador).
+ */
+export function PlanPicker({
+  prices,
+  trialDays,
+  trialEnd,
+  founder = false,
+}: {
+  prices: { month: number; year: number }
+  trialDays: number | null
+  trialEnd: string | null
+  founder?: boolean
+}) {
   const [interval, setInterval] = useState<"month" | "year">("year")
   const [state, action, pending] = useActionState(startCheckout, undefined)
   const savings = Math.round((1 - prices.year / (prices.month * 12)) * 100)
 
   const options = [
-    { value: "year" as const, title: "Anual", price: brl(prices.year), hint: `por ano · ${brl(prices.year / 12)}/mês · economize ${savings}%` },
-    { value: "month" as const, title: "Mensal", price: brl(prices.month), hint: "por mês" },
+    {
+      value: "year" as const,
+      title: "Anual",
+      price: brl(prices.year / 12),
+      unit: "/mês",
+      hint: `cobrado ${brl(prices.year)} por ano · economize ${savings}%`,
+    },
+    { value: "month" as const, title: "Mensal", price: brl(prices.month), unit: "/mês", hint: "cobrado todo mês" },
   ]
 
   return (
@@ -44,7 +62,10 @@ export function PlanPicker({ prices, founderUntil }: { prices: { month: number; 
                 </span>
               )}
               <span className="text-sm font-semibold">{option.title}</span>
-              <span className="font-display text-2xl font-bold text-primary">{option.price}</span>
+              <span className="font-display text-2xl font-bold text-primary">
+                {option.price}
+                <span className="text-sm font-normal text-muted-foreground">{option.unit}</span>
+              </span>
               <span className="text-xs text-muted-foreground">{option.hint}</span>
             </button>
           )
@@ -52,11 +73,11 @@ export function PlanPicker({ prices, founderUntil }: { prices: { month: number; 
       </div>
       {state?.error && <FieldError>{state.error}</FieldError>}
       <Button type="submit" size="lg" className="h-12 w-full text-base font-semibold" disabled={pending}>
-        <SparkleIcon weight="fill" /> {pending ? "Abrindo o pagamento…" : "Assinar o Cervo Pro"}
+        {pending ? "Abrindo o pagamento…" : trialDays && !founder ? `Começar ${trialDays} dias grátis` : "Assinar"}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        {founderUntil
-          ? `Como fundador, a primeira cobrança só acontece em ${founderUntil}. Cancele quando quiser.`
+        {trialEnd
+          ? `Hoje você não paga nada. A primeira cobrança é em ${trialEnd}; cancele antes e não paga nada.`
           : "Pagamento seguro pelo Stripe (cartão, Apple Pay ou Google Pay). Cancele quando quiser."}
       </p>
     </form>

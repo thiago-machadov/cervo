@@ -44,6 +44,10 @@ export default function PrivacyPage() {
           problemas.
         </li>
         <li>
+          <strong>Assinatura:</strong> plano, situação (teste, ativa, cancelada) e datas de cobrança. Os dados do cartão
+          ficam com o Stripe; nós nunca os recebemos.
+        </li>
+        <li>
           <strong>Dados técnicos:</strong> endereço IP e registros de acesso (data, hora, página), gerados pela nossa
           infraestrutura para segurança e prevenção de abuso.
         </li>
@@ -99,6 +103,10 @@ export default function PrivacyPage() {
         <li>
           <strong>Cloudflare</strong>: hospedagem, rede, proteção contra ataques e armazenamento das imagens (rede
           global).
+        </li>
+        <li>
+          <strong>Stripe</strong>: processamento dos pagamentos da assinatura, cobrança e recibos (Estados Unidos e
+          Irlanda).
         </li>
         <li>
           <strong>Provedor de e-mail</strong> (ex.: Resend): envio dos e-mails de cadastro e senha (Estados Unidos).

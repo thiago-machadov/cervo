@@ -1,14 +1,11 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { LockSimpleIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover } from "@/components/book-cover"
 import { BooksDoodle, FlameDoodle, StarDoodle } from "@/components/doodles"
 import { PageHeader } from "@/components/page-header"
 import { PageSuspense } from "@/components/page-suspense"
-import { UpgradeCard } from "@/components/upgrade-card"
 import { getCurrentUser } from "@/lib/auth"
 import { dayKey } from "@/lib/dates"
-import { isPro } from "@/lib/plan"
 import { MONTHS, WEEKDAYS, getYearStats } from "@/lib/stats"
 import { cn } from "@/lib/utils"
 
@@ -41,7 +38,6 @@ function heat(pages: number) {
 
 async function StatsContent({ searchParams }: Pick<PageProps<"/estatisticas">, "searchParams">) {
   const user = await getCurrentUser()
-  const pro = await isPro(user.id)
   const currentYear = Number(dayKey().slice(0, 4))
   const { ano } = await searchParams
   const requested = Number(ano)
@@ -87,24 +83,7 @@ async function StatsContent({ searchParams }: Pick<PageProps<"/estatisticas">, "
         ))}
       </dl>
 
-      {!pro ? (
-        <div className="space-y-4">
-          <div aria-hidden className="pointer-events-none relative space-y-3 overflow-hidden rounded-2xl bg-card p-4 ring-1 ring-border/60 select-none">
-            <div className="flex h-32 items-end gap-1.5 blur-[3px]">
-              {[30, 55, 40, 80, 65, 90, 45, 70, 85, 50, 60, 75].map((h, i) => (
-                <div key={i} className="flex-1 rounded-t bg-primary/60" style={{ height: `${h}%` }} />
-              ))}
-            </div>
-            <span className="absolute inset-0 flex items-center justify-center">
-              <LockSimpleIcon className="size-8 text-primary" weight="fill" />
-            </span>
-          </div>
-          <UpgradeCard
-            title="Estatísticas completas são Pro"
-            description="Páginas por mês, seu dia da semana favorito, calendário de leitura, livros do ano e a retrospectiva completa."
-          />
-        </div>
-      ) : (
+      <>
         <>
           <section className="relative space-y-3 overflow-hidden rounded-2xl bg-primary p-5 text-primary-foreground">
             <StarDoodle className="absolute top-4 right-4 w-8 opacity-80" />
@@ -241,7 +220,7 @@ async function StatsContent({ searchParams }: Pick<PageProps<"/estatisticas">, "
             )}
           </section>
         </>
-      )}
+      </>
     </div>
   )
 }

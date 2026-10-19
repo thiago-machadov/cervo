@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { DownloadSimpleIcon, LockSimpleIcon, PencilSimpleIcon, TargetIcon, TrophyIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr"
+import { DownloadSimpleIcon, PencilSimpleIcon, TargetIcon, TrophyIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover, ClubTile } from "@/components/book-cover"
 import { BooksDoodle, EyeDoodle, FlameDoodle, StarDoodle } from "@/components/doodles"
 import { CreateChallengeButton } from "@/components/challenge-form"
@@ -20,7 +20,6 @@ import { canManageClub, clubMembersLabel, findClubHeir } from "@/lib/clubs"
 import { getClubChallenges } from "@/lib/challenges"
 import { dayKey, formatDate } from "@/lib/dates"
 import { db } from "@/lib/db"
-import { isPro } from "@/lib/plan"
 import { expectedPage, getClubDetail } from "@/lib/queries"
 import { getSessionUserId } from "@/lib/session"
 import { cn } from "@/lib/utils"
@@ -52,9 +51,8 @@ async function ClubContent({ params, searchParams }: PageProps<"/clubes/[id]">) 
   const myRole = club.members.find((m) => m.userId === user.id)?.role ?? null
   const isOwner = myRole === "OWNER"
   const canManage = canManageClub(myRole)
-  const [heir, ownerIsPro, challenges] = await Promise.all([
+  const [heir, challenges] = await Promise.all([
     isOwner ? findClubHeir(club.id, user.id) : null,
-    isPro(club.ownerId),
     getClubChallenges(
       club.id,
       club.members.map((m) => ({ userId: m.userId, name: m.user.name }))
@@ -176,22 +174,7 @@ async function ClubContent({ params, searchParams }: PageProps<"/clubes/[id]">) 
                   <TrophyIcon className="size-5 text-primary" weight="fill" /> Desafios
                 </h2>
                 {challenges.length > 0 && <ClubChallenges challenges={challenges} viewerId={user.id} canManage={canManage} />}
-                {canManage &&
-                  (ownerIsPro ? (
-                    <CreateChallengeButton clubId={club.id} today={dayKey()} />
-                  ) : (
-                    <Link
-                      href="/assinatura"
-                      className="flex items-center gap-3 rounded-2xl border border-dashed border-primary/30 p-4 text-sm text-muted-foreground"
-                    >
-                      <LockSimpleIcon className="size-5 shrink-0 text-primary" weight="fill" />
-                      <span>
-                        {isOwner
-                          ? "Crie desafios para o clube (ex.: ler 25 dias em 30) com o Cervo Pro."
-                          : "Desafios ficam disponíveis quando o dono do clube for Pro."}
-                      </span>
-                    </Link>
-                  ))}
+                {canManage && <CreateChallengeButton clubId={club.id} today={dayKey()} />}
               </section>
             )}
 
@@ -261,7 +244,7 @@ async function ClubContent({ params, searchParams }: PageProps<"/clubes/[id]">) 
                   ? "Páginas lidas em qualquer livro e dias com check-in desde que o clube entrou na leitura livre."
                   : "Páginas lidas no livro do clube e dias com check-in desde que ele foi escolhido."}
               </p>
-              {canManage && ownerIsPro && (
+              {canManage && (
                 <div className="px-4">
                   {/* Download de arquivo: <a> normal, não <Link>. */}
                   <Button

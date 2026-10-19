@@ -21,8 +21,8 @@ const mode = key.startsWith("sk_live") ? "PRODUÇÃO (live)" : "teste"
 console.log(`Stripe em modo ${mode}`)
 
 const PRICES = [
-  { lookup_key: "cervo_pro_monthly", unit_amount: 990, interval: "month", nickname: "Cervo Pro mensal" },
-  { lookup_key: "cervo_pro_yearly", unit_amount: 7990, interval: "year", nickname: "Cervo Pro anual" },
+  { lookup_key: "cervo_pro_monthly", unit_amount: 1799, interval: "month", nickname: "Cervo mensal" },
+  { lookup_key: "cervo_pro_yearly", unit_amount: 14496, interval: "year", nickname: "Cervo anual (R$ 12,08/mês)" },
 ]
 
 // Produto: primeiro pelo preço já criado (a busca do Stripe demora a indexar produtos novos).
@@ -31,10 +31,15 @@ const products = known.data[0] ? { data: [known.data[0].product] } : await strip
 const product =
   products.data[0] ??
   (await stripe.products.create({
-    name: "Cervo Pro",
-    description: "Clubes ilimitados, estatísticas e retrospectiva, desafios e exportação do ranking.",
+    name: "Assinatura Cervo",
+    description: "Check-ins, metas, clubes do livro, amigos, estatísticas e desafios. 14 dias grátis.",
     metadata: { app: "cervo" },
   }))
+// Mantém nome e descrição do produto em dia (o produto já pode existir de uma versão anterior).
+await stripe.products.update(product.id, {
+  name: "Assinatura Cervo",
+  description: "Check-ins, metas, clubes do livro, amigos, estatísticas e desafios. 14 dias grátis.",
+})
 console.log(`Produto: ${product.id}`)
 
 // Preços
@@ -81,7 +86,7 @@ const portalFeatures = {
   },
 }
 const configs = await stripe.billingPortal.configurations.list({ is_default: true, limit: 1 })
-const business_profile = { headline: "Cervo Pro", privacy_policy_url: `${siteUrl}/privacidade`, terms_of_service_url: `${siteUrl}/termos` }
+const business_profile = { headline: "Assinatura Cervo", privacy_policy_url: `${siteUrl}/privacidade`, terms_of_service_url: `${siteUrl}/termos` }
 if (configs.data[0]) {
   await stripe.billingPortal.configurations.update(configs.data[0].id, { features: portalFeatures, business_profile })
   console.log(`Portal: ${configs.data[0].id} (atualizado)`)

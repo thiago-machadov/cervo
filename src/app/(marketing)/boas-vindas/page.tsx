@@ -17,10 +17,14 @@ import {
 import type { Icon } from "@phosphor-icons/react/lib"
 import { BirdDoodle, BookDoodle, DeerDoodle, FlameDoodle, SpiralDoodle, StarDoodle, SunDoodle, ThreadDoodle } from "@/components/doodles"
 import { Button } from "@/components/ui/button"
-import { FREE_CLUB_LIMIT } from "@/lib/plan-limits"
+import { TRIAL_DAYS } from "@/lib/plan"
+import { PRO_PRICES } from "@/lib/stripe"
 import { getInvite } from "@/lib/queries"
 import { getSessionUserId } from "@/lib/session"
 import { FAQ, SITE } from "@/lib/site-info"
+
+const brl = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+const ANNUAL_SAVINGS = Math.round((1 - PRO_PRICES.year / (PRO_PRICES.month * 12)) * 100)
 
 // A landing responde em "/" para quem não está logado (rewrite no proxy); esta é a URL canônica.
 export const metadata: Metadata = {
@@ -41,7 +45,7 @@ const FEATURES: { icon: Icon; title: string; text: string }[] = [
   { icon: UsersThreeIcon, title: "Clubes do livro", text: "Públicos ou privados, com o mesmo livro para todos ou leitura livre, meta do clube, ranking e desafios." },
   { icon: ChatsCircleIcon, title: "Feed com amigos", text: "Veja o que seus amigos e clubes estão lendo, reaja e comente cada check-in." },
   { icon: CameraIcon, title: "Biblioteca com capas", text: "Fotografe a capa, acompanhe o progresso de cada livro e o que você quer ler depois." },
-  { icon: ChartLineUpIcon, title: "Estatísticas e retrospectiva", text: "Páginas por mês, seu dia favorito para ler e o resumo do seu ano em livros (Pro)." },
+  { icon: ChartLineUpIcon, title: "Estatísticas e retrospectiva", text: "Páginas por mês, seu dia favorito para ler e o resumo do seu ano em livros." },
 ]
 
 export default function WelcomePage({ searchParams }: PageProps<"/boas-vindas">) {
@@ -75,7 +79,7 @@ export default function WelcomePage({ searchParams }: PageProps<"/boas-vindas">)
             <WelcomeActionsWithSession searchParams={searchParams} />
           </Suspense>
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            {["Grátis para começar", "Sem anúncios", "iPhone e Android"].map((item) => (
+            {[`${TRIAL_DAYS} dias grátis`, "Sem anúncios", "iPhone e Android"].map((item) => (
               <li key={item} className="flex items-center gap-1">
                 <CheckCircleIcon className="size-4 text-primary" weight="fill" /> {item}
               </li>
@@ -145,34 +149,47 @@ export default function WelcomePage({ searchParams }: PageProps<"/boas-vindas">)
       {/* Planos */}
       <section aria-labelledby="planos" className="bg-card py-14">
         <div className="mx-auto max-w-5xl space-y-8 px-5">
-          <h2 id="planos" className="font-display text-3xl font-bold text-primary uppercase">
-            Grátis para começar
-          </h2>
+          <div className="space-y-2">
+            <h2 id="planos" className="font-display text-3xl font-bold text-primary uppercase">
+              {TRIAL_DAYS} dias grátis para experimentar
+            </h2>
+            <p className="max-w-2xl text-muted-foreground">
+              Tudo liberado durante o teste. Se não for para você, cancele antes do fim e não paga nada.
+            </p>
+          </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3 rounded-2xl bg-background p-6 ring-1 ring-border/60">
-              <p className="font-display text-2xl font-bold uppercase">Grátis</p>
-              <p className="text-sm text-muted-foreground">Para criar o hábito, sem anúncios.</p>
-              <ul className="space-y-1.5 text-sm">
-                {["Check-ins, sequência e metas", "Biblioteca e fotos", "Amigos, feed, reações e comentários", `Até ${FREE_CLUB_LIMIT} clubes`].map((item) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <CheckCircleIcon className="size-4 text-primary" weight="fill" /> {item}
-                  </li>
-                ))}
-              </ul>
+            <div className="relative space-y-2 overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground">
+              <StarDoodle className="absolute top-4 right-4 w-8 text-primary-foreground opacity-80" />
+              <p className="text-xs font-bold tracking-widest uppercase opacity-80">Anual · mais escolhido</p>
+              <p className="font-display text-4xl font-bold">
+                {brl(PRO_PRICES.year / 12)}
+                <span className="text-base font-normal opacity-80">/mês</span>
+              </p>
+              <p className="text-sm opacity-90">Cobrado {brl(PRO_PRICES.year)} por ano. Economize {ANNUAL_SAVINGS}%.</p>
             </div>
-            <div className="relative space-y-3 overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground">
-              <StarDoodle className="absolute top-4 right-4 w-8 opacity-80" />
-              <p className="font-display text-2xl font-bold uppercase">Cervo Pro</p>
-              <p className="text-sm opacity-90">R$ 9,90 por mês ou R$ 79,90 por ano.</p>
-              <ul className="space-y-1.5 text-sm">
-                {["Clubes ilimitados", "Estatísticas e retrospectiva do ano", "Desafios no clube", "Exportar o ranking do clube"].map((item) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <CheckCircleIcon className="size-4" weight="fill" /> {item}
-                  </li>
-                ))}
-              </ul>
+            <div className="space-y-2 rounded-2xl bg-background p-6 ring-1 ring-border/60">
+              <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">Mensal</p>
+              <p className="font-display text-4xl font-bold text-primary">
+                {brl(PRO_PRICES.month)}
+                <span className="text-base font-normal text-muted-foreground">/mês</span>
+              </p>
+              <p className="text-sm text-muted-foreground">Cobrado todo mês. Cancele quando quiser.</p>
             </div>
           </div>
+          <ul className="grid gap-2 text-sm sm:grid-cols-2">
+            {[
+              "Check-ins, sequência e metas diárias",
+              "Clubes do livro ilimitados, com ranking e desafios",
+              "Amigos, feed, reações e comentários",
+              "Estatísticas e retrospectiva do ano",
+              "Biblioteca com fotos das capas",
+              "Sem anúncios",
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-2">
+                <CheckCircleIcon className="size-4 text-primary" weight="fill" /> {item}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -263,7 +280,7 @@ function FinalSignUp({ next }: { next?: string }) {
       render={<Link href={withNextQuery("/cadastro", next)} />}
       nativeButton={false}
     >
-      Criar conta grátis
+      Começar {TRIAL_DAYS} dias grátis
     </Button>
   )
 }
@@ -308,7 +325,7 @@ function WelcomeActions({ next }: { next?: string }) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
       <Button size="lg" className="h-12 px-6 text-base font-semibold" render={<Link href={`/cadastro${query}`} />} nativeButton={false}>
-        Criar conta grátis
+        Começar {TRIAL_DAYS} dias grátis
       </Button>
       <Button
         variant="ghost"
@@ -337,9 +354,8 @@ function JsonLd() {
       inLanguage: "pt-BR",
       image: `${SITE.url}/icon/512`,
       offers: [
-        { "@type": "Offer", name: "Grátis", price: "0", priceCurrency: "BRL" },
-        { "@type": "Offer", name: "Cervo Pro mensal", price: "9.90", priceCurrency: "BRL" },
-        { "@type": "Offer", name: "Cervo Pro anual", price: "79.90", priceCurrency: "BRL" },
+        { "@type": "Offer", name: "Assinatura mensal", price: PRO_PRICES.month.toFixed(2), priceCurrency: "BRL" },
+        { "@type": "Offer", name: "Assinatura anual", price: PRO_PRICES.year.toFixed(2), priceCurrency: "BRL" },
       ],
     },
     {

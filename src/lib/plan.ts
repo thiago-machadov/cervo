@@ -4,25 +4,30 @@ import type Stripe from "stripe"
 import { db } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
 
-import { FREE_CLUB_LIMIT } from "@/lib/plan-limits"
+/** Dias de teste grátis (com cartão) na primeira assinatura. */
+export const TRIAL_DAYS = 14
 
-/** No plano grátis, cada pessoa participa de no máximo FREE_CLUB_LIMIT clubes (contando os que criou). */
-export { FREE_CLUB_LIMIT }
+/** Data da primeira cobrança para quem começa o teste agora. */
+export function trialEndsAt(from = new Date()) {
+  return new Date(from.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000)
+}
 
-/** Status do Stripe que dão acesso ao Pro. past_due mantém o acesso enquanto o Stripe tenta cobrar de novo. */
+/** Status do Stripe que dão acesso. past_due mantém o acesso enquanto o Stripe tenta cobrar de novo. */
 const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due"])
 
 export type Plan = {
-  isPro: boolean
-  /** De onde vem o Pro: assinatura paga, cortesia de fundador ou nenhum. */
+  /** Pode usar o app: assinatura ativa, teste em andamento ou cortesia de fundador. */
+  hasAccess: boolean
+  /** De onde vem o acesso: assinatura (ou teste) no Stripe, cortesia de fundador ou nenhum. */
   source: "stripe" | "founder" | null
   proUntil: Date | null
+  /** Ainda não usou o teste grátis (nunca teve assinatura no Stripe). */
+  canTrial: boolean
   subscription: {
     status: string
     interval: string | null
     currentPeriodEnd: Date | null
     cancelAtPeriodEnd: boolean
-    hasCustomer: boolean
   } | null
 }
 
@@ -38,30 +43,23 @@ export const getPlan = cache(async (userId: string): Promise<Plan> => {
   const founder = Boolean(user?.proUntil && user.proUntil > now)
 
   return {
-    isPro: paid || founder,
+    hasAccess: paid || founder,
     source: paid ? "stripe" : founder ? "founder" : null,
     proUntil: user?.proUntil ?? null,
+    canTrial: !sub?.stripeSubscriptionId,
     subscription: sub
       ? {
           status: sub.status,
           interval: sub.interval,
           currentPeriodEnd: sub.currentPeriodEnd,
           cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
-          hasCustomer: true,
         }
       : null,
   }
 })
 
-export async function isPro(userId: string) {
-  return (await getPlan(userId)).isPro
-}
-
-/** Quantos clubes o usuário ainda pode ter; null = ilimitado (Pro). */
-export async function remainingClubSlots(userId: string) {
-  if (await isPro(userId)) return null
-  const count = await db.clubMember.count({ where: { userId } })
-  return Math.max(0, FREE_CLUB_LIMIT - count)
+export async function hasAccess(userId: string) {
+  return (await getPlan(userId)).hasAccess
 }
 
 /** Cliente do Stripe do usuário; cria na primeira vez e guarda o id. */

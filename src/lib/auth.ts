@@ -2,6 +2,7 @@ import "server-only"
 import { cache } from "react"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
+import { hasAccess } from "@/lib/plan"
 import { getSessionIdentity, type SessionIdentity } from "@/lib/session"
 
 const userSelect = {
@@ -33,10 +34,15 @@ export const getSessionUser = cache(async () => {
 
 export type CurrentUser = Awaited<ReturnType<typeof getSessionUser>>
 
-/** Usuário logado e com onboarding concluído; caso contrário, redireciona. */
-export async function getCurrentUser(): Promise<CurrentUser> {
+/**
+ * Usuário logado, com onboarding concluído e com acesso (assinatura, teste ou fundador);
+ * senão, redireciona. `requireAccess: false` nas telas que precisam abrir sem assinatura
+ * (assinar, conta/LGPD, feedback).
+ */
+export async function getCurrentUser({ requireAccess = true }: { requireAccess?: boolean } = {}): Promise<CurrentUser> {
   const user = await getSessionUser()
   if (!user.onboardedAt) redirect("/onboarding")
+  if (requireAccess && !(await hasAccess(user.id))) redirect("/assinar")
   return user
 }
 

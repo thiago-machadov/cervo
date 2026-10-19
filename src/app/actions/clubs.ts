@@ -7,7 +7,6 @@ import { z } from "zod"
 import { requireUserId } from "@/lib/auth"
 import {
   acceptInvite,
-  CLUB_LIMIT_MESSAGE,
   ensureReading,
   getClubRole,
   joinPublicClub as joinPublic,
@@ -17,7 +16,6 @@ import {
 import { db } from "@/lib/db"
 import { periodLength } from "@/lib/challenges"
 import { dayKey } from "@/lib/dates"
-import { isPro, remainingClubSlots } from "@/lib/plan"
 import { formValues, type ActionState } from "@/lib/utils-text"
 
 const optionalInt = z.preprocess(
@@ -57,7 +55,6 @@ function goalDate(value?: string) {
 
 export async function createClub(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const userId = await requireUserId()
-  if ((await remainingClubSlots(userId)) === 0) return { error: CLUB_LIMIT_MESSAGE, values: formValues(formData) }
   const parsed = clubSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0]?.message, values: formValues(formData) }
 
@@ -162,13 +159,10 @@ export async function joinClub(code: string) {
 }
 
 /** Entrar num clube público a partir da busca. */
-export async function joinPublicClub(clubId: string): Promise<{ error?: string; limit?: boolean } | void> {
+export async function joinPublicClub(clubId: string): Promise<{ error?: string } | void> {
   const userId = await requireUserId()
   const result = await joinPublic(userId, clubId)
-  if ("error" in result) {
-    if (result.error === "limit") return { error: CLUB_LIMIT_MESSAGE, limit: true }
-    return { error: result.error === "full" ? "Esse clube lotou" : "Não foi possível entrar nesse clube" }
-  }
+  if ("error" in result) return { error: result.error === "full" ? "Esse clube lotou" : "Não foi possível entrar nesse clube" }
   redirect(`/clubes/${result.clubId}?bemvindo=1`)
 }
 
@@ -244,14 +238,10 @@ const challengeSchema = z.object({
   endsOn: z.iso.date("Data de fim inválida"),
 })
 
-/** Só dono/admins criam desafios, e só se o dono do clube for Pro. */
+/** Só dono/admins criam desafios. */
 async function canRunChallenges(clubId: string, userId: string) {
-  const [role, club] = await Promise.all([
-    getClubRole(clubId, userId),
-    db.club.findUnique({ where: { id: clubId }, select: { ownerId: true } }),
-  ])
-  if (!club || (role !== "OWNER" && role !== "ADMIN")) return "Só o dono e os admins criam desafios"
-  if (!(await isPro(club.ownerId))) return "Desafios são um recurso do Cervo Pro do dono do clube"
+  const role = await getClubRole(clubId, userId)
+  if (role !== "OWNER" && role !== "ADMIN") return "Só o dono e os admins criam desafios"
   return null
 }
 

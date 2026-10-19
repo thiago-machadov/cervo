@@ -6,11 +6,9 @@ import { FeedList } from "@/components/feed-item"
 import { FriendButton } from "@/components/friend-button"
 import { PageHeader } from "@/components/page-header"
 import { PageSuspense } from "@/components/page-suspense"
-import { ProBadge } from "@/components/pro-badge"
 import { UserAvatar } from "@/components/user-avatar"
 import { getCurrentUser } from "@/lib/auth"
 import { getFriendState } from "@/lib/friends"
-import { isPro } from "@/lib/plan"
 import { getPersonProfile } from "@/lib/queries"
 
 export const metadata: Metadata = { title: "Leitor" }
@@ -29,11 +27,7 @@ export default function PersonPage({ params }: PageProps<"/pessoas/[id]">) {
 async function PersonContent({ params }: Pick<PageProps<"/pessoas/[id]">, "params">) {
   const { id } = await params
   const user = await getCurrentUser()
-  const [profile, friendState, personIsPro] = await Promise.all([
-    getPersonProfile(user.id, id),
-    getFriendState(user.id, id),
-    isPro(id),
-  ])
+  const [profile, friendState] = await Promise.all([getPersonProfile(user.id, id), getFriendState(user.id, id)])
   if (!profile || !profile.person.onboardedAt) notFound()
 
   const { person, stats, checkIns, canSeeActivity } = profile
@@ -54,7 +48,7 @@ async function PersonContent({ params }: Pick<PageProps<"/pessoas/[id]">, "param
           <UserAvatar name={person.name} className="size-16 text-lg" />
           <div className="min-w-0">
             <p className="truncate text-lg font-semibold">
-              {person.name} {personIsPro && <ProBadge className="ml-1" />}
+              {person.name}
             </p>
             <p className="text-sm text-muted-foreground">
               {isSelf

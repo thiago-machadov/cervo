@@ -8,7 +8,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { syncStripeCustomer } from "@/lib/plan"
 import { isStripeConfigured, stripe } from "@/lib/stripe"
 
-export const metadata: Metadata = { title: "Bem-vindo ao Pro" }
+export const metadata: Metadata = { title: "Assinatura confirmada" }
 
 export default function SuccessPage({ searchParams }: PageProps<"/assinatura/sucesso">) {
   return (
@@ -24,7 +24,7 @@ export default function SuccessPage({ searchParams }: PageProps<"/assinatura/suc
  */
 async function SuccessContent({ searchParams }: Pick<PageProps<"/assinatura/sucesso">, "searchParams">) {
   const { session_id } = await searchParams
-  const user = await getCurrentUser()
+  const user = await getCurrentUser({ requireAccess: false })
 
   let confirmed = false
   if (typeof session_id === "string" && isStripeConfigured()) {
@@ -39,17 +39,17 @@ async function SuccessContent({ searchParams }: Pick<PageProps<"/assinatura/suce
   return (
     <main className="flex min-h-[80dvh] flex-col items-center justify-center gap-4 p-6 text-center">
       <FlockDoodle className="w-48" />
-      <h1 className="font-display text-4xl font-bold text-primary uppercase">{confirmed ? "Bem-vindo ao Pro!" : "Quase lá"}</h1>
+      <h1 className="font-display text-4xl font-bold text-primary uppercase">{confirmed ? "Tudo certo!" : "Quase lá"}</h1>
       <p className="max-w-xs text-sm text-muted-foreground">
         {confirmed
-          ? "Sua assinatura está ativa. Clubes ilimitados, estatísticas e desafios já estão liberados."
+          ? "Sua assinatura está ativa. Bora fazer o check-in de hoje?"
           : "Estamos confirmando seu pagamento com o Stripe. Isso costuma levar poucos segundos e esta tela se atualiza sozinha."}
       </p>
       {!confirmed && <AutoRefresh />}
       <div className="flex w-full max-w-xs flex-col gap-2">
         {confirmed ? (
-          <Button className="h-11" render={<Link href="/estatisticas" />} nativeButton={false}>
-            Ver minhas estatísticas
+          <Button className="h-11" render={<Link href="/" />} nativeButton={false}>
+            Começar a ler
           </Button>
         ) : (
           <Button className="h-11" render={<Link href={`/assinatura/sucesso?session_id=${session_id ?? ""}`} />} nativeButton={false}>

@@ -23,7 +23,7 @@ export default function AccountPage() {
 const row = "flex items-center gap-3 px-4 py-3 transition-colors active:bg-muted"
 
 async function AccountContent() {
-  const user = await getCurrentUser()
+  const user = await getCurrentUser({ requireAccess: false })
   const ownedClubs = await db.club.count({ where: { ownerId: user.id } })
 
   return (

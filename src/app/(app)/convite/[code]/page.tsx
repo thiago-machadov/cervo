@@ -7,11 +7,9 @@ import { PageSuspense } from "@/components/page-suspense"
 import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
 import { joinClub } from "@/app/actions/clubs"
-import { UpgradeCard } from "@/components/upgrade-card"
 import { getSessionUser } from "@/lib/auth"
 import { clubMembersLabel } from "@/lib/clubs"
 import { db } from "@/lib/db"
-import { FREE_CLUB_LIMIT, remainingClubSlots } from "@/lib/plan"
 import { getInvite } from "@/lib/queries"
 import { withNext } from "@/lib/redirects"
 
@@ -46,10 +44,7 @@ async function InviteContent({ params }: Pick<PageProps<"/convite/[code]">, "par
   }
 
   const { club } = invite
-  const [alreadyMember, slots] = await Promise.all([
-    db.clubMember.findUnique({ where: { clubId_userId: { clubId: club.id, userId: user.id } } }),
-    remainingClubSlots(user.id),
-  ])
+  const alreadyMember = await db.clubMember.findUnique({ where: { clubId_userId: { clubId: club.id, userId: user.id } } })
 
   return (
     <main className="relative flex min-h-[85dvh] flex-col justify-center gap-6 overflow-hidden p-6 text-center">
@@ -95,12 +90,6 @@ async function InviteContent({ params }: Pick<PageProps<"/convite/[code]">, "par
         <p className="relative rounded-2xl bg-card p-4 text-sm text-muted-foreground ring-1 ring-border/60">
           Esse clube está lotado. Peça para quem te convidou aumentar o limite de membros.
         </p>
-      ) : slots === 0 ? (
-        <UpgradeCard
-          className="relative"
-          title={`Você já está em ${FREE_CLUB_LIMIT} clubes`}
-          description={`No plano grátis dá para participar de até ${FREE_CLUB_LIMIT} clubes. Saia de um ou assine o Cervo Pro para entrar neste.`}
-        />
       ) : (
         <form action={joinClub.bind(null, code)} className="relative">
           <SubmitButton size="lg" className="h-12 w-full text-base" pendingText="Entrando no clube…">
