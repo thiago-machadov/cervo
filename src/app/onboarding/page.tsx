@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { getSessionUser } from "@/lib/auth"
 import { db } from "@/lib/db"
 import type { GoalType } from "@/lib/goals"
@@ -13,9 +12,9 @@ export const metadata: Metadata = { title: "Primeiros passos" }
 export default function OnboardingPage({ searchParams }: PageProps<"/onboarding">) {
   return (
     <main className="mx-auto min-h-dvh max-w-md bg-background">
-      <Suspense fallback={<PageSkeleton />}>
+      <PageSuspense>
         <OnboardingContent searchParams={searchParams} />
-      </Suspense>
+      </PageSuspense>
     </main>
   )
 }

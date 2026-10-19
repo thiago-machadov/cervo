@@ -1,4 +1,3 @@
-import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { BookOpenTextIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover } from "@/components/book-cover"
@@ -6,7 +5,7 @@ import { CheckInDrawer } from "@/components/check-in-drawer"
 import { FeedList } from "@/components/feed-item"
 import { LibraryStatusTabs, RemoveFromLibraryButton } from "@/components/library-item-actions"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { SectionHeader } from "@/components/section-header"
 import { Button } from "@/components/ui/button"
 import { getCurrentUser } from "@/lib/auth"
@@ -14,9 +13,9 @@ import { getLibraryItem } from "@/lib/queries"
 
 export default function LibraryItemPage({ params }: PageProps<"/biblioteca/[id]">) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <LibraryItemContent params={params} />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { CaretRightIcon } from "@phosphor-icons/react/dist/ssr"
 import { AddBookDrawer } from "@/components/add-book-drawer"
@@ -7,7 +6,7 @@ import { BookCover } from "@/components/book-cover"
 import { DoodleEmpty } from "@/components/doodle-empty"
 import { BookDoodle, SpiralDoodle } from "@/components/doodles"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentUser } from "@/lib/auth"
@@ -20,9 +19,9 @@ const sections = ["READING", "WANT", "DONE"] as const
 
 export default function LibraryPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <LibraryContent />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

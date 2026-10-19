@@ -1,11 +1,10 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { CheckIcon, MinusIcon, SparkleIcon, WarningIcon } from "@phosphor-icons/react/dist/ssr"
 import { DeerDoodle, StarDoodle } from "@/components/doodles"
 import { ManageSubscriptionButton } from "@/components/manage-subscription-button"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { PlanPicker } from "@/components/plan-picker"
 import { ProBadge } from "@/components/pro-badge"
 import { getCurrentUser } from "@/lib/auth"
@@ -20,9 +19,9 @@ export default function SubscriptionPage({ searchParams }: PageProps<"/assinatur
   return (
     <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Cervo Pro" backHref="/perfil" />
-      <Suspense fallback={<PageSkeleton />}>
+      <PageSuspense>
         <SubscriptionContent searchParams={searchParams} />
-      </Suspense>
+      </PageSuspense>
     </main>
   )
 }

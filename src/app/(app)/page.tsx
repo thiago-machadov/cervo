@@ -1,4 +1,3 @@
-import { Suspense } from "react"
 import Link from "next/link"
 import { BookOpenTextIcon } from "@phosphor-icons/react/dist/ssr"
 import { CheckInDrawer } from "@/components/check-in-drawer"
@@ -6,7 +5,7 @@ import { DeerDoodle, StarDoodle, SunDoodle } from "@/components/doodles"
 import { ContinueReading } from "@/components/continue-reading"
 import { GoalCard } from "@/components/goal-card"
 import { InstallBanner } from "@/components/install-banner"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { SectionHeader } from "@/components/section-header"
 import { StreakCard } from "@/components/streak-card"
 import { UserAvatar } from "@/components/user-avatar"
@@ -17,9 +16,9 @@ import { getCheckInOptions, getLibrary, getUserStats } from "@/lib/queries"
 
 export default function TodayPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <TodayContent />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

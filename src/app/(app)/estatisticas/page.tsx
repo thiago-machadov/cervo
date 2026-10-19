@@ -1,11 +1,10 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { LockSimpleIcon } from "@phosphor-icons/react/dist/ssr"
 import { BookCover } from "@/components/book-cover"
 import { BooksDoodle, FlameDoodle, StarDoodle } from "@/components/doodles"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { UpgradeCard } from "@/components/upgrade-card"
 import { getCurrentUser } from "@/lib/auth"
 import { dayKey } from "@/lib/dates"
@@ -19,9 +18,9 @@ export default function StatsPage({ searchParams }: PageProps<"/estatisticas">) 
   return (
     <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Estatísticas" backHref="/perfil" />
-      <Suspense fallback={<PageSkeleton />}>
+      <PageSuspense>
         <StatsContent searchParams={searchParams} />
-      </Suspense>
+      </PageSuspense>
     </main>
   )
 }

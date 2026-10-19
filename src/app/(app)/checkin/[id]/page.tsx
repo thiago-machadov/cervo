@@ -1,11 +1,10 @@
-import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { CheckInActions } from "@/components/check-in-actions"
 import { CommentForm } from "@/components/comment-form"
 import { EyeDoodle } from "@/components/doodles"
 import { FeedItem } from "@/components/feed-item"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { UserAvatar } from "@/components/user-avatar"
 import { getCurrentUser } from "@/lib/auth"
 import { timeAgo } from "@/lib/dates"
@@ -13,9 +12,9 @@ import { getCheckInDetail, isLatestCheckIn } from "@/lib/queries"
 
 export default function CheckInPage({ params }: PageProps<"/checkin/[id]">) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <CheckInContent params={params} />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

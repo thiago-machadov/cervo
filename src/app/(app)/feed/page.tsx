@@ -5,7 +5,7 @@ import { DoodleEmpty } from "@/components/doodle-empty"
 import { BirdDoodle } from "@/components/doodles"
 import { FeedList } from "@/components/feed-item"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { Button } from "@/components/ui/button"
 import { UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
 import { getCurrentUser } from "@/lib/auth"
@@ -27,9 +27,9 @@ export default function FeedPage({ searchParams }: PageProps<"/feed">) {
           </Suspense>
         }
       />
-      <Suspense fallback={<PageSkeleton />}>
+      <PageSuspense>
         <FeedContent searchParams={searchParams} />
-      </Suspense>
+      </PageSuspense>
     </main>
   )
 }

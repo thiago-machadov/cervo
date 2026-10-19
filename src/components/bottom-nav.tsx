@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import Link, { useLinkStatus } from "next/link"
 import { usePathname } from "next/navigation"
 import { BookOpenIcon, ChatsCircleIcon, FireIcon, UserIcon, UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
 import { DeerDoodle } from "@/components/doodles"
@@ -48,13 +48,9 @@ export function BottomNavItems({ pathname }: { pathname?: string }) {
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex h-16 flex-col items-center justify-center gap-1 text-[0.7rem] font-medium text-muted-foreground transition-colors",
-                    active && "text-primary"
-                  )}
+                  className="flex h-16 flex-col items-center justify-center gap-1 text-[0.7rem] font-medium text-muted-foreground transition-transform active:scale-90"
                 >
-                  <Icon className="size-6" weight={active ? "fill" : "regular"} />
-                  {label}
+                  <NavLinkContent active={active} icon={Icon} label={label} variant="bottom" />
                 </Link>
               </li>
             )
@@ -77,13 +73,9 @@ export function BottomNavItems({ pathname }: { pathname?: string }) {
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-                    active && "bg-secondary text-secondary-foreground hover:bg-secondary"
-                  )}
+                  className="block rounded-xl text-sm font-medium text-muted-foreground transition-transform active:scale-[0.98]"
                 >
-                  <Icon className="size-5" weight={active ? "fill" : "regular"} />
-                  {label}
+                  <NavLinkContent active={active} icon={Icon} label={label} variant="side" />
                 </Link>
               </li>
             )
@@ -91,5 +83,44 @@ export function BottomNavItems({ pathname }: { pathname?: string }) {
         </ul>
       </nav>
     </>
+  )
+}
+
+/**
+ * Conteúdo do item do menu. Acende na hora do toque (useLinkStatus), antes de a nova
+ * tela chegar, para a navegação nunca parecer travada.
+ */
+function NavLinkContent({
+  active,
+  icon: Icon,
+  label,
+  variant,
+}: {
+  active: boolean
+  icon: (typeof items)[number]["icon"]
+  label: string
+  variant: "bottom" | "side"
+}) {
+  const { pending } = useLinkStatus()
+  const on = active || pending
+
+  if (variant === "bottom") {
+    return (
+      <span className={cn("flex flex-col items-center gap-1 transition-colors duration-150", on && "text-primary")}>
+        <Icon className={cn("size-6", pending && "animate-pulse")} weight={on ? "fill" : "regular"} />
+        {label}
+      </span>
+    )
+  }
+  return (
+    <span
+      className={cn(
+        "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-150 hover:bg-muted hover:text-foreground",
+        on && "bg-secondary text-secondary-foreground hover:bg-secondary"
+      )}
+    >
+      <Icon className={cn("size-5", pending && "animate-pulse")} weight={on ? "fill" : "regular"} />
+      {label}
+    </span>
   )
 }

@@ -1,12 +1,11 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { LockSimpleIcon } from "@phosphor-icons/react/dist/ssr"
 import { SpiralDoodle } from "@/components/doodles"
 import { FeedList } from "@/components/feed-item"
 import { FriendButton } from "@/components/friend-button"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { ProBadge } from "@/components/pro-badge"
 import { UserAvatar } from "@/components/user-avatar"
 import { getCurrentUser } from "@/lib/auth"
@@ -20,9 +19,9 @@ export default function PersonPage({ params }: PageProps<"/pessoas/[id]">) {
   return (
     <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Leitor" backHref="/amigos" />
-      <Suspense fallback={<PageSkeleton />}>
+      <PageSuspense>
         <PersonContent params={params} />
-      </Suspense>
+      </PageSuspense>
     </main>
   )
 }

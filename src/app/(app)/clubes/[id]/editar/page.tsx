@@ -1,17 +1,16 @@
-import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { ClubForm } from "@/components/club-form"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { getCurrentUser } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { getLibrary } from "@/lib/queries"
 
 export default function EditClubPage({ params }: PageProps<"/clubes/[id]/editar">) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <EditClubContent params={params} />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

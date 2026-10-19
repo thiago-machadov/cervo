@@ -1,12 +1,11 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { CaretRightIcon } from "@phosphor-icons/react/dist/ssr"
 import { DoodleEmpty } from "@/components/doodle-empty"
 import { FlockDoodle } from "@/components/doodles"
 import { FriendButton } from "@/components/friend-button"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { ShareProfileButton } from "@/components/share-profile-button"
 import { UserAvatar } from "@/components/user-avatar"
 import { getCurrentUser } from "@/lib/auth"
@@ -19,9 +18,9 @@ export default function FriendsPage() {
   return (
     <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Amigos" backHref="/feed" />
-      <Suspense fallback={<PageSkeleton />}>
+      <PageSuspense>
         <FriendsContent />
-      </Suspense>
+      </PageSuspense>
     </main>
   )
 }

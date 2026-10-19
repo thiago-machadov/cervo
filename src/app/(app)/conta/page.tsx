@@ -1,10 +1,9 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { CaretRightIcon, DownloadSimpleIcon, FileTextIcon, ShieldCheckIcon } from "@phosphor-icons/react/dist/ssr"
 import { DeleteAccountForm } from "@/components/delete-account-form"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { getCurrentUser } from "@/lib/auth"
 import { db } from "@/lib/db"
 
@@ -14,9 +13,9 @@ export default function AccountPage() {
   return (
     <main className="md:mx-auto md:max-w-2xl">
       <PageHeader title="Privacidade e conta" backHref="/perfil" />
-      <Suspense fallback={<PageSkeleton />}>
+      <PageSuspense>
         <AccountContent />
-      </Suspense>
+      </PageSuspense>
     </main>
   )
 }

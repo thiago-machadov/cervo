@@ -16,10 +16,12 @@
 	"limits": {
 		"cpu_ms": 200
 	},
-	// Roda o Worker perto do banco (Supabase em us-east-1) em vez de perto do usuário:
-	// as várias consultas de cada página ficam bem mais rápidas.
+	// Roda o Worker ao lado do banco (Supabase em aws us-east-1) em vez de perto do usuário:
+	// cada página faz várias consultas, e cada uma vira uma ida e volta curta.
+	// O modo "smart" tinha escolhido Amsterdã (longe do banco e do Brasil), por isso a região fixa.
 	"placement": {
-		"mode": "smart"
+		"mode": "targeted",
+		"region": "aws:us-east-1"
 	},
 	// Pool de conexões da Cloudflare na frente do Supabase (session pooler, porta 5432), cache de consultas desligado.
 	// Evita abrir conexão TLS nova com o banco a cada request. No `next dev` o app usa DATABASE_URL direto;

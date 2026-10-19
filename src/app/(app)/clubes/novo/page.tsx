@@ -1,8 +1,7 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import { ClubForm } from "@/components/club-form"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { UpgradeCard } from "@/components/upgrade-card"
 import { getCurrentUser } from "@/lib/auth"
 import { FREE_CLUB_LIMIT, remainingClubSlots } from "@/lib/plan"
@@ -12,9 +11,9 @@ export const metadata: Metadata = { title: "Novo clube" }
 
 export default function NewClubPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <NewClubContent />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

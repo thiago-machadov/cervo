@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr"
 import { ClubTile } from "@/components/book-cover"
@@ -7,7 +6,7 @@ import { DoodleEmpty } from "@/components/doodle-empty"
 import { EyeDoodle } from "@/components/doodles"
 import { JoinClubButton } from "@/components/join-club-button"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getCurrentUser } from "@/lib/auth"
@@ -21,9 +20,9 @@ export default function ExploreClubsPage({ searchParams }: PageProps<"/clubes/ex
   return (
     <main>
       <PageHeader title="Explorar clubes" backHref="/clubes" />
-      <Suspense fallback={<PageSkeleton />}>
+      <PageSuspense>
         <ExploreContent searchParams={searchParams} />
-      </Suspense>
+      </PageSuspense>
     </main>
   )
 }

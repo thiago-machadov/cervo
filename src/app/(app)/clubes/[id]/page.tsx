@@ -1,4 +1,3 @@
-import { Suspense } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { DownloadSimpleIcon, LockSimpleIcon, PencilSimpleIcon, TargetIcon, TrophyIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr"
@@ -10,7 +9,7 @@ import { FeedList } from "@/components/feed-item"
 import { InviteButton } from "@/components/invite-button"
 import { LeaveClubButton } from "@/components/leave-club-button"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { UserAvatar } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -24,9 +23,9 @@ import { cn } from "@/lib/utils"
 
 export default function ClubPage({ params }: PageProps<"/clubes/[id]">) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <ClubContent params={params} />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

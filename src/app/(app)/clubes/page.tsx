@@ -1,12 +1,11 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { CaretRightIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr"
 import { ClubTile } from "@/components/book-cover"
 import { DoodleEmpty } from "@/components/doodle-empty"
 import { FlockDoodle } from "@/components/doodles"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { UserAvatar } from "@/components/user-avatar"
 import { AvatarGroup } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -17,9 +16,9 @@ export const metadata: Metadata = { title: "Clubes" }
 
 export default function ClubsPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <ClubsContent />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

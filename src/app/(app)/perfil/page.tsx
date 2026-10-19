@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { CaretRightIcon, ChartLineUpIcon, ChatCircleDotsIcon, DeviceMobileIcon, ShieldCheckIcon, SignOutIcon, SparkleIcon, UsersThreeIcon } from "@phosphor-icons/react/dist/ssr"
 import type { Icon } from "@phosphor-icons/react/lib"
@@ -9,7 +8,7 @@ import { EditGoalDrawer } from "@/components/edit-goal-drawer"
 import { SubmitButton } from "@/components/submit-button"
 import { ThemeSelector } from "@/components/theme-selector"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { ProBadge } from "@/components/pro-badge"
 import { UserAvatar } from "@/components/user-avatar"
 import { signOut } from "@/app/actions/auth"
@@ -31,9 +30,9 @@ const LINKS: { href: string; icon: Icon; title: string; description: string }[] 
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <ProfileContent />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

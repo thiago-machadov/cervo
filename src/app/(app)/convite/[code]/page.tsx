@@ -1,9 +1,8 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { BookCover } from "@/components/book-cover"
 import { BirdDoodle, SpiralClusterDoodle, StampFrame, StarDoodle } from "@/components/doodles"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { SubmitButton } from "@/components/submit-button"
 import { Button } from "@/components/ui/button"
 import { joinClub } from "@/app/actions/clubs"
@@ -18,9 +17,9 @@ export const metadata: Metadata = { title: "Convite" }
 
 export default function InvitePage({ params }: PageProps<"/convite/[code]">) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <InviteContent params={params} />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

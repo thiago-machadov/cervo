@@ -160,3 +160,61 @@
     display: none;
   }
 }
+
+/* ----------------------------------------------------------------------------
+ * Transições entre telas (React <ViewTransition>; ver page-suspense.tsx).
+ * O resto da página (menu, cabeçalhos) fica parado: só o conteúdo anima.
+ * Saída rápida, entrada um pouco mais lenta e subindo, como quem chega.
+ * -------------------------------------------------------------------------- */
+:root {
+  --vt-exit: 120ms;
+  --vt-enter: 220ms;
+  --vt-move: 320ms;
+  --vt-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(.content-out),
+::view-transition-old(.skeleton-out) {
+  animation: var(--vt-exit) ease-out both vt-fade reverse;
+}
+
+::view-transition-new(.skeleton-in) {
+  animation: var(--vt-enter) ease-out both vt-fade;
+}
+
+::view-transition-new(.content-in) {
+  animation:
+    var(--vt-enter) var(--vt-ease) var(--vt-exit) both vt-fade,
+    var(--vt-move) var(--vt-ease) both vt-rise;
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-rise {
+  from {
+    transform: translateY(12px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

@@ -1,10 +1,9 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { MemberActions } from "@/components/member-actions"
 import { PageHeader } from "@/components/page-header"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/user-avatar"
 import { getCurrentUser } from "@/lib/auth"
@@ -16,9 +15,9 @@ export const metadata: Metadata = { title: "Membros" }
 
 export default function MembersPage({ params }: PageProps<"/clubes/[id]/membros">) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <MembersContent params={params} />
-    </Suspense>
+    </PageSuspense>
   )
 }
 

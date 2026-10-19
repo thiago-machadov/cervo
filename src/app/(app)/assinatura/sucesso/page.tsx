@@ -1,8 +1,7 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from "next/link"
 import { FlockDoodle } from "@/components/doodles"
-import { PageSkeleton } from "@/components/page-skeleton"
+import { PageSuspense } from "@/components/page-suspense"
 import { Button } from "@/components/ui/button"
 import { getCurrentUser } from "@/lib/auth"
 import { syncStripeCustomer } from "@/lib/plan"
@@ -12,9 +11,9 @@ export const metadata: Metadata = { title: "Bem-vindo ao Pro" }
 
 export default function SuccessPage({ searchParams }: PageProps<"/assinatura/sucesso">) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <PageSuspense>
       <SuccessContent searchParams={searchParams} />
-    </Suspense>
+    </PageSuspense>
   )
 }
 
